@@ -19,7 +19,7 @@ namespace Taxi
         public float fullTurnSpeed = 4f;
         [Tooltip("Turn rate fraction when almost stopped (lets you steer away from a wall).")]
         [Range(0f, 1f)] public float minTurnFactor = 0.5f;
-        [Tooltip("Fraction of speed kept after hitting something.")]
+        [Tooltip("Fraction of speed kept after a head-on hit. Glancing hits keep proportionally more.")]
         [Range(0f, 1f)] public float collisionSpeedKeep = 0.3f;
         public float stoppedSpeedThreshold = 0.25f;
 
@@ -53,5 +53,7 @@ namespace Taxi
         [Tooltip("To get out: hold a finger within this radius (fraction of screen height) of the stopped car.")]
         [Range(0.05f, 0.3f)] public float exitHoldRadiusScreenFraction = 0.1f;
         public Vector3 exitLocalOffset = new Vector3(-1.8f, 0f, 0f);
+        [Tooltip("If both sides of the car are blocked, search for a free spot on the road up to this distance from the car.")]
+        public float exitSearchRadius = 4.5f;
     }
 }

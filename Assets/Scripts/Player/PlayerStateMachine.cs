@@ -23,10 +23,15 @@ namespace Taxi
         float holdProgress; // 0..1, shared by the enter ring and the exit ring
         float timer;
         bool canEnter = true;
+        Vector3 exitPos;
+        int curbMask, blockMask;
 
         void Start()
         {
             InputReader.I.IsHoldTarget = IsOverStoppedCar;
+            int curb = LayerMask.NameToLayer("Curb"), playerLayer = LayerMask.NameToLayer("Player");
+            curbMask = curb >= 0 ? 1 << curb : 0;
+            blockMask = Physics.DefaultRaycastLayers & ~(playerLayer >= 0 ? 1 << playerLayer : 0);
             Enter(State.OnFoot);
         }
 
@@ -89,7 +94,42 @@ namespace Taxi
 
         void RequestExit()
         {
-            if (Current == State.Driving && car.IsStopped) Enter(State.Exiting);
+            if (Current != State.Driving || !car.IsStopped) return;
+            if (TryFindExitPoint(out exitPos)) Enter(State.Exiting);
+            else holdProgress = 0f;   // boxed in on every side: stay in the car, drive somewhere else
+        }
+
+        /// <summary>
+        /// Left door first, then right, then front/back, then a ring search up to exitSearchRadius.
+        /// A spot is valid when the line from the car to it crosses no curb or wall (so it is on the road the car is on)
+        /// and a player-sized capsule fits there.
+        /// </summary>
+        bool TryFindExitPoint(out Vector3 result)
+        {
+            Transform t = car.transform;
+            Vector3 left = config.exitLocalOffset;
+            if (IsFreeExit(t.TransformPoint(left), out result)) return true;
+            if (IsFreeExit(t.TransformPoint(new Vector3(-left.x, left.y, left.z)), out result)) return true;
+            if (IsFreeExit(t.TransformPoint(new Vector3(0f, 0f, 3.2f)), out result)) return true;
+            if (IsFreeExit(t.TransformPoint(new Vector3(0f, 0f, -3.2f)), out result)) return true;
+            for (float r = Mathf.Abs(left.x) + 0.6f; r <= config.exitSearchRadius; r += 0.6f)
+                for (int a = 0; a < 360; a += 30)
+                {
+                    Vector3 local = Quaternion.Euler(0f, a, 0f) * new Vector3(-r, 0f, 0f);
+                    if (IsFreeExit(t.TransformPoint(local), out result)) return true;
+                }
+            result = Vector3.zero;
+            return false;
+        }
+
+        bool IsFreeExit(Vector3 p, out Vector3 result)
+        {
+            p.y = 0f;
+            result = p;
+            Vector3 from = car.transform.position; from.y = 0.5f;
+            Vector3 to = p; to.y = 0.5f;
+            if (Physics.Linecast(from, to, curbMask | blockMask, QueryTriggerInteraction.Ignore)) return false;
+            return !Physics.CheckCapsule(p + Vector3.up * 0.45f, p + Vector3.up * 1.45f, 0.35f, blockMask, QueryTriggerInteraction.Ignore);
         }
 
         void Enter(State s)
@@ -122,9 +162,7 @@ namespace Taxi
                     car.InputEnabled = false;
                     hud.ShowHoldRing(0f, Vector3.zero);
                     hud.ShowStick(false, Vector2.zero, Vector2.zero, 0f);
-                    Vector3 pos = car.transform.TransformPoint(config.exitLocalOffset);
-                    pos.y = 0f;
-                    player.Teleport(pos, car.transform.rotation);
+                    player.Teleport(exitPos, car.transform.rotation);
                     player.SetVisible(true);
                     cameraRig.Target = player.transform;
                     canEnter = false;

@@ -99,9 +99,14 @@ namespace Taxi
 
         void OnCollisionEnter(Collision c)
         {
-            // Lose most speed on impact so the car never keeps grinding into geometry.
-            if (c.rigidbody == null || c.rigidbody.isKinematic)
-                Speed *= config.collisionSpeedKeep;
+            // Lose speed in proportion to how head-on the impact is: a frontal hit keeps collisionSpeedKeep,
+            // grazing a curb keeps almost everything, so the car slides along edges instead of stopping.
+            if (c.rigidbody != null && !c.rigidbody.isKinematic) return;
+            Vector3 moveDir = transform.forward * (Speed >= 0f ? 1f : -1f);
+            Vector3 n = c.GetContact(0).normal;
+            n.y = 0f;
+            float headOn = n.sqrMagnitude > 1e-4f ? Mathf.Clamp01(Vector3.Dot(moveDir, -n.normalized)) : 1f;
+            Speed *= Mathf.Lerp(1f, config.collisionSpeedKeep, headOn);
         }
     }
 }

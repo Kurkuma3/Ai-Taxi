@@ -81,12 +81,15 @@ namespace Taxi.EditorTools
             animator.applyRootMotion = false;
             animator.cullingMode = AnimatorCullingMode.CullUpdateTransforms;
             var playerCtrl = player.AddComponent<PlayerController>();
+            CurbBuilder.AssignPlayerLayer(CurbBuilder.EnsureLayer(CurbBuilder.PlayerLayerName));
             Set(playerCtrl, "config", cfg);
             Set(playerCtrl, "visual", playerVisual);
             var playerAnim = player.AddComponent<PlayerAnimator>();
             Set(playerAnim, "config", cfg);
             Set(playerAnim, "player", playerCtrl);
             Set(playerAnim, "animator", animator);
+
+            CurbBuilder.Build();
 
             // ---- Camera & light -----------------------------------------------------
             var cam = Camera.main;
