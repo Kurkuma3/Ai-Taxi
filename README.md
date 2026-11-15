@@ -18,7 +18,8 @@ How each piece works is written up in [IMPLEMENTATION.md](IMPLEMENTATION.md).
 - `ArtSource/` — Blender sources (`TaxiDriver.blend`), outside `Assets` so Unity does not import them.
 - `IMPLEMENTATION.md` — how each mechanic is built and how to verify it; updated with every feature.
 - `Assets/Config/GameplayConfig.asset` — every tunable number (speeds, turn rate, enter radius/time, stick size).
-- `Assets/Editor/SceneBootstrap.cs` — menu **Taxi > Build Main Scene** rebuilds the greybox scene from primitives.
+- `Assets/Editor/SceneBootstrap.cs` — menu **Taxi > Build Main Scene** rebuilds the whole scene (city + car + player + HUD).
+- `Assets/Editor/CityBuilder.cs` + `Assets/Config/CityLayout.asset` — menu **Taxi > Build City** builds the greybox city (roads, buildings, passenger stops, zone barriers) from data transcribed from `docs/city_sketch.png`; prefabs in `Assets/Prefabs/City`.
 - `Assets/Tests/PlayMode/CoreLoopTests.cs` — simulated-input smoke test of the whole enter/drive/stop/exit loop.
 
 ## Headless commands

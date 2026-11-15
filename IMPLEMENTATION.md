@@ -92,8 +92,29 @@ Source: `ArtSource/TaxiDriver.blend` (Blender 5.3, built through Blender MCP by 
 
 Verify: Play, walk with the stick — the driver steps in time with the speed, stops into the breathing idle; enter the car — the model hides; exit — it reappears beside the car. Feet sliding → raise `walkAnimSpeedMultiplier`.
 
+## 9. Greybox city from the sketch (4 zones, barriers, passenger stops)
+
+Source of truth: `docs/city_sketch.png` (hand drawing; scale bar 40 m = 200 px, so 1 m = 5 px; map ≈ 280 × 195 m). It was transcribed into metres by a script (road axes, building footprints, red pocket marks, zone frames) and written as `Assets/Editor/CitySketchData.cs`, which fills the ScriptableObject `Assets/Config/CityLayout.asset` (`CityLayout`: roads as polylines, turnaround rings, convex building footprints with height and zone, pockets, barriers, zone rectangles, park, parking lot, spawn points). Coordinates: X east, Z north, origin at the bottom-left of the sketch.
+
+**Builder.** `Assets/Editor/CityBuilder.cs`, menu **Taxi > Build City** (also called by **Taxi > Build Main Scene**). Destroys the previous `City` root and rebuilds everything from the layout using prefabs in `Assets/Prefabs/City`:
+- `RoadQuad` — one flat quad per polyline segment, 10 m wide, extended by half a width at both ends so L-corners and T-junctions fill themselves; each segment sits on its own 0.4 mm Y step so overlaps never z-fight. `Turnaround` (flat cylinder) covers bends and the two dead-end rings.
+- `Building` — MeshFilter/MeshRenderer/MeshCollider; the footprint is extruded at build time into a flat-shaded prism saved under `Assets/Art/Models/City/`. Material by zone (edge grey, Z1 sand, Z2 tan, Z3 rose, Z4 lilac).
+- `PassengerStop` — 8 × 3 m pocket quad beside the road plus an empty `Marker` with the `PassengerStop` component (zone id). 29 stops, one per red mark.
+- `ZoneBarrier` — BoxCollider across the whole road (blocks car and player), four cones, a bar and a placeholder price sign (`TextMesh`); the `ZoneBarrier` component stores `closesZone` and `price`. No unlock logic yet.
+- `InvisibleWall` — BoxColliders on the four edges of `bounds`.
+- Ground is one plane with the only flat collider; roads, park and lot are visual decals on top of it. The old 120 × 120 arena is gone.
+
+**Zones** (rectangles in the layout): Z1 start (47..130, 3..83), Z2 $150 (130..224, 0..84), Z3 $300 (158..278, 83..174), Z4 $600 (40..158, 83..197); the park rectangle is Z4 regardless. A road on a border belongs to the cheaper zone, so the vertical x = 125 road and the z = 78 road are Z1/Z2, the z = 117 road east of x = 158 is Z3.
+
+**Barriers** (9): three on the Z1→Z2 border (south road, z = 45 road and z = 78 road at x = 133), two on Z1→Z4 (west road and park-west road at z = 83), one on Z2→Z3 (east road at z = 83), three on Z3→Z4 (z = 117 and z = 140 roads at x = 153, park path at its east gate). Note for the unlock logic: the Z3/Z4 barriers must stay until **both** zones are open, otherwise buying Z4 from the west gives Z3 for free.
+
+**Spawn.** Player (62, 29) and car (69, 27) on the parking lot with the star; the car faces the diagonal exit road.
+
+Verify: Taxi > Build City, console clean; in Play Mode drive the south road east — the car stops at the cones at x ≈ 131; the checks that were run are in the change log entry.
+
 ## Change log
 
 - 2026-11-13 — Automatic reverse when the stick points behind the car (config: `reverseEnterAngle`, `reverseExitAngle`, `reverseEnterSpeed`, `reverseMaxSpeed`); amber stick knob while reversing.
+- 2026-11-15 — Greybox city built from `docs/city_sketch.png` via `CityLayout` + `CityBuilder`: 22 road polylines, 2 turnarounds, 26 buildings, 29 passenger stops, 9 zone barriers, invisible walls; arena removed; spawns on the parking lot. Checked: 789 car-sized overlap samples along all road axes hit nothing; all 9 barriers have colliders; in Play Mode a coasting car (10–12 m/s) stops at the south and west barriers and runs the Z1 south road freely.
 - 2026-11-15 — Taxi driver character from Blender replaces the player capsule: FBX + palette, Generic rig, Idle/Walk clips, Animator driven by `PlayerAnimator` (config: `walkAnimSpeedMultiplier`, `walkAnimDampTime`).
 - 2026-11-13 — EXIT CAR button removed. Exit is now "hold a finger on the stopped car" using the same ring as entering; `InputReader` gained hold-finger detection (`IsHoldTarget`, `HoldActive`, `HoldPos`); config: `exitHoldRadiusScreenFraction`.

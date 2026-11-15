@@ -5,27 +5,42 @@ using UnityEngine;
 namespace Taxi.EditorTools
 {
     /// <summary>
-    /// Menu: Taxi > Run PlayMode Tests. Runs the PlayMode suite and prints one console line per test
-    /// plus a summary, so the result can be read from the console (also through Unity MCP).
-    /// Callbacks are registered on load because the test run reloads the domain.
+    /// Menu: Taxi > Run PlayMode Tests. Runs the PlayMode suite and prints one console line per test plus a
+    /// summary. The same lines go to Library/TaxiTests.log, because the console is cleared between play-mode
+    /// runs. Callbacks are registered on load because the test run reloads the domain.
     /// </summary>
     [InitializeOnLoad]
     public static class TestRunnerShortcut
     {
+        public const string LogPath = "Library/TaxiTests.log";
+
         class Logger : ICallbacks
         {
-            public void RunStarted(ITestAdaptor tests) { Debug.Log("[TaxiTests] run started"); }
+            static void Line(string s) { System.IO.File.AppendAllText(LogPath, System.DateTime.Now.ToString("HH:mm:ss ") + s + "\n"); }
+
+            public void RunStarted(ITestAdaptor tests)
+            {
+                System.IO.File.WriteAllText(LogPath, "");
+                Line("run started");
+                Debug.Log("[TaxiTests] run started");
+            }
+
             public void RunFinished(ITestResultAdaptor r)
             {
-                Debug.Log($"[TaxiTests] finished: {r.TestStatus}, passed={r.PassCount}, failed={r.FailCount}, skipped={r.SkipCount}, {r.Duration:F1}s");
+                string s = $"finished: {r.TestStatus}, passed={r.PassCount}, failed={r.FailCount}, skipped={r.SkipCount}, {r.Duration:F1}s";
+                Line(s);
+                Debug.Log("[TaxiTests] " + s);
             }
+
             public void TestStarted(ITestAdaptor test) { }
+
             public void TestFinished(ITestResultAdaptor r)
             {
                 if (r.HasChildren) return;
-                string line = $"[TaxiTests] {r.Name}: {r.TestStatus} ({r.Duration:F1}s)";
-                if (r.TestStatus == TestStatus.Failed) Debug.LogError(line + "\n" + r.Message + "\n" + r.StackTrace);
-                else Debug.Log(line);
+                string line = $"{r.Name}: {r.TestStatus} ({r.Duration:F1}s)";
+                Line(line + (r.TestStatus == TestStatus.Failed ? " | " + r.Message : ""));
+                if (r.TestStatus == TestStatus.Failed) Debug.LogError("[TaxiTests] " + line + "\n" + r.Message + "\n" + r.StackTrace);
+                else Debug.Log("[TaxiTests] " + line);
             }
         }
 

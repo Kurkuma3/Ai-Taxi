@@ -142,8 +142,8 @@ namespace Taxi.EditorTools
         {
             string dir = System.IO.Path.GetDirectoryName(ControllerPath).Replace('\\', '/');
             if (!AssetDatabase.IsValidFolder(dir)) AssetDatabase.CreateFolder("Assets/Art", "Animations");
-            if (AssetDatabase.LoadAssetAtPath<AnimatorController>(ControllerPath) != null)
-                AssetDatabase.DeleteAsset(ControllerPath);
+            var existing = AssetDatabase.LoadAssetAtPath<AnimatorController>(ControllerPath);
+            if (existing != null) return existing;   // keep the asset (and its GUID) stable across scene rebuilds
 
             var ctrl = AnimatorController.CreateAnimatorControllerAtPath(ControllerPath);
             ctrl.AddParameter(SpeedParam, AnimatorControllerParameterType.Float);

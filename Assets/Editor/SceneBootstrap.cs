@@ -25,9 +25,6 @@ namespace Taxi.EditorTools
             // Assets first, then force an import so they have GUIDs before the scene references them.
             var cfg = LoadOrCreate<GameplayConfig>(ConfigPath);
             var carPhysics = LoadOrCreatePhysics("Assets/Config/CarPhysics.physicMaterial");
-            var matGround = Mat("Ground", new Color(0.62f, 0.66f, 0.52f));
-            var matBlock = Mat("Block", new Color(0.78f, 0.72f, 0.64f));
-            var matCurb = Mat("Curb", new Color(0.45f, 0.45f, 0.48f));
             var matTaxi = Mat("Taxi", new Color(1f, 0.78f, 0.1f));
             var matDark = Mat("Dark", new Color(0.12f, 0.12f, 0.14f));
             AssetDatabase.SaveAssets();
@@ -39,33 +36,13 @@ namespace Taxi.EditorTools
 
             EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects, NewSceneMode.Single);
 
-            // ---- World --------------------------------------------------------------
-            var ground = Prim(PrimitiveType.Plane, "Ground", Vector3.zero, new Vector3(12f, 1f, 12f), matGround, null, true);
-            ground.isStatic = true;
-
-            float half = 60f;
-            Prim(PrimitiveType.Cube, "Wall_N", new Vector3(0, 0.5f, half), new Vector3(half * 2 + 1, 1, 1), matCurb, null, true);
-            Prim(PrimitiveType.Cube, "Wall_S", new Vector3(0, 0.5f, -half), new Vector3(half * 2 + 1, 1, 1), matCurb, null, true);
-            Prim(PrimitiveType.Cube, "Wall_E", new Vector3(half, 0.5f, 0), new Vector3(1, 1, half * 2 + 1), matCurb, null, true);
-            Prim(PrimitiveType.Cube, "Wall_W", new Vector3(-half, 0.5f, 0), new Vector3(1, 1, half * 2 + 1), matCurb, null, true);
-
-            var blocks = new GameObject("Blocks");
-            Vector3[] pos =
-            {
-                new Vector3(-18, 0, 14), new Vector3(18, 0, 14), new Vector3(-18, 0, -16), new Vector3(20, 0, -14),
-                new Vector3(0, 0, 30), new Vector3(-36, 0, 0), new Vector3(36, 0, 2), new Vector3(0, 0, -34),
-                new Vector3(-30, 0, 32), new Vector3(30, 0, -34), new Vector3(32, 0, 34), new Vector3(-34, 0, -34),
-            };
-            for (int i = 0; i < pos.Length; i++)
-            {
-                float w = 8f + (i % 3) * 3f, d = 8f + ((i + 1) % 3) * 3f, h = 4f + (i % 4) * 1.5f;
-                var b = Prim(PrimitiveType.Cube, "Block_" + i, pos[i] + Vector3.up * h * 0.5f, new Vector3(w, h, d), matBlock, blocks.transform, true);
-                b.isStatic = true;
-            }
+            // ---- World: greybox city from CityLayout (ground, roads, buildings, stops, barriers) ----------
+            var layout = CityBuilder.LoadOrCreateLayout();
+            CityBuilder.Build(layout);
 
             // ---- Car ----------------------------------------------------------------
             var car = new GameObject("Car");
-            car.transform.position = new Vector3(4f, 0f, 0f);
+            car.transform.SetPositionAndRotation(CityLayout.ToWorld(layout.carSpawn), Quaternion.Euler(0f, layout.carSpawnYaw, 0f));
             var rb = car.AddComponent<Rigidbody>();
             rb.mass = 1200f;
             rb.linearDamping = 0f;
@@ -86,7 +63,7 @@ namespace Taxi.EditorTools
 
             // ---- Player -------------------------------------------------------------
             var player = new GameObject("Player");
-            player.transform.position = new Vector3(0f, 0f, -6f);
+            player.transform.SetPositionAndRotation(CityLayout.ToWorld(layout.playerSpawn), Quaternion.Euler(0f, layout.playerSpawnYaw, 0f));
             var cc = player.AddComponent<CharacterController>();
             cc.center = new Vector3(0, 0.9f, 0);
             cc.radius = 0.35f;

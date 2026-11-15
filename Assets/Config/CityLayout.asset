@@ -1,0 +1,545 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 97be5afa728f327469876a9cd5623f61, type: 3}
+  m_Name: CityLayout
+  m_EditorClassIdentifier: Taxi.Runtime::Taxi.CityLayout
+  roadWidth: 10
+  bounds:
+    serializedVersion: 2
+    x: 44
+    y: -2
+    width: 242
+    height: 202
+  park:
+    serializedVersion: 2
+    x: 95
+    y: 79
+    width: 94
+    height: 36
+  parkingLot:
+    serializedVersion: 2
+    x: 54
+    y: 18
+    width: 26
+    height: 22
+  playerSpawn: {x: 71, y: 33}
+  playerSpawnYaw: 90
+  carSpawn: {x: 76, y: 34}
+  carSpawnYaw: 0
+  zones:
+  - id: 1
+    name: Zone 1
+    price: 0
+    rect:
+      serializedVersion: 2
+      x: 47
+      y: 3
+      width: 83
+      height: 80
+  - id: 2
+    name: Zone 2
+    price: 150
+    rect:
+      serializedVersion: 2
+      x: 130
+      y: 0
+      width: 94
+      height: 84
+  - id: 3
+    name: Zone 3
+    price: 300
+    rect:
+      serializedVersion: 2
+      x: 158
+      y: 83
+      width: 120
+      height: 91
+  - id: 4
+    name: Zone 4
+    price: 600
+    rect:
+      serializedVersion: 2
+      x: 40
+      y: 83
+      width: 118
+      height: 114
+  roads:
+  - name: West
+    points:
+    - {x: 52, y: 8}
+    - {x: 52, y: 137}
+  - name: South
+    points:
+    - {x: 52, y: 8}
+    - {x: 193, y: 8}
+  - name: East
+    points:
+    - {x: 193, y: 8}
+    - {x: 193, y: 78}
+    - {x: 193, y: 117}
+  - name: ParkSouth
+    points:
+    - {x: 52, y: 78}
+    - {x: 193, y: 78}
+  - name: Main117
+    points:
+    - {x: 52, y: 117}
+    - {x: 191, y: 117}
+  - name: EastLink
+    points:
+    - {x: 191, y: 117}
+    - {x: 204, y: 109}
+    - {x: 250, y: 109}
+  - name: ParkPath
+    points:
+    - {x: 93, y: 88}
+    - {x: 115, y: 91}
+    - {x: 140, y: 95}
+    - {x: 165, y: 99}
+    - {x: 191, y: 105}
+    - {x: 204, y: 109}
+  - name: ParkWest
+    points:
+    - {x: 93, y: 78}
+    - {x: 93, y: 117}
+  - name: Z88
+    points:
+    - {x: 52, y: 88}
+    - {x: 93, y: 88}
+  - name: DiagNW
+    points:
+    - {x: 52, y: 123}
+    - {x: 88, y: 170}
+  - name: K91
+    points:
+    - {x: 91, y: 117}
+    - {x: 91, y: 170}
+  - name: Top170
+    points:
+    - {x: 88, y: 170}
+    - {x: 118, y: 170}
+  - name: M118
+    points:
+    - {x: 118, y: 170}
+    - {x: 118, y: 140}
+  - name: N140
+    points:
+    - {x: 118, y: 140}
+    - {x: 162, y: 140}
+  - name: O162
+    points:
+    - {x: 162, y: 140}
+    - {x: 162, y: 117}
+  - name: X76
+    points:
+    - {x: 76, y: 78}
+    - {x: 76, y: 28}
+  - name: Z54
+    points:
+    - {x: 52, y: 54}
+    - {x: 64, y: 54}
+    - {x: 83, y: 52}
+    - {x: 109, y: 38.5}
+  - name: BigDiag
+    points:
+    - {x: 74, y: 26}
+    - {x: 125, y: 45}
+  - name: Z45
+    points:
+    - {x: 125, y: 45}
+    - {x: 193, y: 45}
+  - name: X125
+    points:
+    - {x: 125, y: 78}
+    - {x: 125, y: 8}
+  - name: DiagSE1
+    points:
+    - {x: 135, y: 45}
+    - {x: 150, y: 32}
+    - {x: 150, y: 8}
+  - name: DiagSE2
+    points:
+    - {x: 163, y: 45}
+    - {x: 169, y: 24}
+    - {x: 193, y: 8}
+  rings:
+  - name: RingNW
+    center: {x: 52, y: 145}
+    radius: 8
+  - name: RingE
+    center: {x: 258, y: 109}
+    radius: 8
+  buildings:
+  - name: WestEdge
+    zone: 0
+    height: 12
+    polygon:
+    - {x: 1, y: 3}
+    - {x: 44, y: 3}
+    - {x: 44, y: 180}
+    - {x: 1, y: 180}
+  - name: SouthEdge
+    zone: 0
+    height: 12
+    polygon:
+    - {x: 50, y: 0}
+    - {x: 192, y: 0}
+    - {x: 192, y: 3}
+    - {x: 50, y: 3}
+  - name: B2
+    zone: 4
+    height: 10.3
+    polygon:
+    - {x: 48, y: 158}
+    - {x: 68, y: 158}
+    - {x: 82, y: 178}
+    - {x: 82, y: 191}
+    - {x: 48, y: 191}
+  - name: B1
+    zone: 4
+    height: 9.1
+    polygon:
+    - {x: 88, y: 176}
+    - {x: 116, y: 176}
+    - {x: 116, y: 193}
+    - {x: 88, y: 193}
+  - name: B21
+    zone: 4
+    height: 12.6
+    polygon:
+    - {x: 127, y: 149}
+    - {x: 156, y: 149}
+    - {x: 156, y: 172}
+    - {x: 127, y: 172}
+  - name: B3
+    zone: 4
+    height: 8.5
+    polygon:
+    - {x: 100, y: 123}
+    - {x: 109, y: 123}
+    - {x: 109, y: 160}
+    - {x: 100, y: 160}
+  - name: B8
+    zone: 4
+    height: 11.8
+    polygon:
+    - {x: 114, y: 126}
+    - {x: 156, y: 126}
+    - {x: 156, y: 132}
+    - {x: 114, y: 132}
+  - name: B4
+    zone: 4
+    height: 10.6
+    polygon:
+    - {x: 63, y: 123}
+    - {x: 83, y: 123}
+    - {x: 83, y: 149}
+  - name: B9
+    zone: 4
+    height: 8.4
+    polygon:
+    - {x: 58, y: 94}
+    - {x: 84, y: 94}
+    - {x: 84, y: 108}
+    - {x: 58, y: 108}
+  - name: B7
+    zone: 3
+    height: 11.6
+    polygon:
+    - {x: 168, y: 126}
+    - {x: 198, y: 126}
+    - {x: 198, y: 136}
+    - {x: 168, y: 136}
+  - name: B6
+    zone: 3
+    height: 8.3
+    polygon:
+    - {x: 206, y: 115}
+    - {x: 219, y: 115}
+    - {x: 219, y: 139}
+    - {x: 206, y: 139}
+  - name: B5
+    zone: 3
+    height: 11
+    polygon:
+    - {x: 225, y: 118}
+    - {x: 244, y: 118}
+    - {x: 244, y: 142}
+    - {x: 225, y: 142}
+  - name: B22
+    zone: 3
+    height: 8.5
+    polygon:
+    - {x: 268, y: 106}
+    - {x: 282, y: 106}
+    - {x: 282, y: 128}
+    - {x: 268, y: 128}
+  - name: B23
+    zone: 3
+    height: 8.6
+    polygon:
+    - {x: 199, y: 84}
+    - {x: 211, y: 84}
+    - {x: 211, y: 101}
+    - {x: 199, y: 101}
+  - name: B24
+    zone: 3
+    height: 11
+    polygon:
+    - {x: 215, y: 85}
+    - {x: 245, y: 85}
+    - {x: 245, y: 100}
+    - {x: 215, y: 100}
+  - name: B25
+    zone: 3
+    height: 13.8
+    polygon:
+    - {x: 250, y: 80}
+    - {x: 280, y: 80}
+    - {x: 280, y: 99}
+    - {x: 250, y: 99}
+  - name: B15
+    zone: 2
+    height: 8.9
+    polygon:
+    - {x: 135, y: 52}
+    - {x: 184, y: 52}
+    - {x: 184, y: 69.5}
+    - {x: 135, y: 69.5}
+  - name: B13
+    zone: 2
+    height: 9.6
+    polygon:
+    - {x: 200, y: 50}
+    - {x: 214, y: 50}
+    - {x: 214, y: 72}
+    - {x: 200, y: 72}
+  - name: B17
+    zone: 2
+    height: 12.4
+    polygon:
+    - {x: 201, y: 8}
+    - {x: 216, y: 8}
+    - {x: 216, y: 40}
+    - {x: 201, y: 40}
+  - name: B18
+    zone: 2
+    height: 14.6
+    polygon:
+    - {x: 172, y: 40}
+    - {x: 182, y: 40}
+    - {x: 188, y: 33}
+    - {x: 188, y: 21}
+    - {x: 178, y: 27}
+  - name: B20
+    zone: 2
+    height: 12
+    polygon:
+    - {x: 131, y: 16.5}
+    - {x: 145, y: 16.5}
+    - {x: 145, y: 23.8}
+    - {x: 131, y: 35.9}
+  - name: B11
+    zone: 1
+    height: 10.8
+    polygon:
+    - {x: 81.5, y: 57}
+    - {x: 88, y: 57}
+    - {x: 88, y: 73}
+    - {x: 81.5, y: 73}
+  - name: B12
+    zone: 1
+    height: 14.8
+    polygon:
+    - {x: 58, y: 59}
+    - {x: 67, y: 59}
+    - {x: 67, y: 73}
+    - {x: 58, y: 73}
+  - name: B14
+    zone: 1
+    height: 8.3
+    polygon:
+    - {x: 98, y: 52}
+    - {x: 107, y: 48}
+    - {x: 118, y: 52}
+    - {x: 118, y: 72}
+    - {x: 98, y: 72}
+  - name: B19
+    zone: 1
+    height: 14
+    polygon:
+    - {x: 72, y: 14}
+    - {x: 116, y: 14}
+    - {x: 116, y: 32.6}
+    - {x: 72, y: 16.3}
+  - name: Garage
+    zone: 1
+    height: 6
+    polygon:
+    - {x: 56, y: 41}
+    - {x: 70, y: 41}
+    - {x: 70, y: 47}
+    - {x: 56, y: 47}
+  pockets:
+  - name: Stop_01
+    zone: 4
+    position: {x: 104.1, y: 163.5}
+    yaw: 90
+  - name: Stop_02
+    zone: 4
+    position: {x: 124.5, y: 163.7}
+    yaw: 180
+  - name: Stop_03
+    zone: 4
+    position: {x: 84.5, y: 151.8}
+    yaw: 0
+  - name: Stop_04
+    zone: 4
+    position: {x: 52, y: 154.5}
+    yaw: 90
+  - name: Stop_05
+    zone: 4
+    position: {x: 111.5, y: 147.9}
+    yaw: 180
+  - name: Stop_06
+    zone: 4
+    position: {x: 149.3, y: 146.5}
+    yaw: 90
+  - name: Stop_07
+    zone: 4
+    position: {x: 125.4, y: 133.5}
+    yaw: 90
+  - name: Stop_08
+    zone: 4
+    position: {x: 97.5, y: 132.7}
+    yaw: 0
+  - name: Stop_09
+    zone: 3
+    position: {x: 182.7, y: 123.5}
+    yaw: 90
+  - name: Stop_10
+    zone: 4
+    position: {x: 123.2, y: 123.5}
+    yaw: 90
+  - name: Stop_11
+    zone: 3
+    position: {x: 258, y: 118.5}
+    yaw: 90
+  - name: Stop_12
+    zone: 3
+    position: {x: 172.1, y: 123.5}
+    yaw: 90
+  - name: Stop_13
+    zone: 4
+    position: {x: 70.2, y: 110.5}
+    yaw: 90
+  - name: Stop_14
+    zone: 3
+    position: {x: 232.4, y: 115.5}
+    yaw: 90
+  - name: Stop_15
+    zone: 3
+    position: {x: 232.1, y: 102.5}
+    yaw: 90
+  - name: Stop_16
+    zone: 4
+    position: {x: 86.5, y: 102}
+    yaw: 0
+  - name: Stop_17
+    zone: 3
+    position: {x: 186.5, y: 97.3}
+    yaw: 0
+  - name: Stop_18
+    zone: 3
+    position: {x: 186.5, y: 90.5}
+    yaw: 0
+  - name: Stop_19
+    zone: 2
+    position: {x: 161.2, y: 71.5}
+    yaw: 90
+  - name: Stop_20
+    zone: 1
+    position: {x: 69.5, y: 70.4}
+    yaw: 180
+  - name: Stop_21
+    zone: 2
+    position: {x: 186.5, y: 68.9}
+    yaw: 0
+  - name: Stop_22
+    zone: 2
+    position: {x: 186.5, y: 58}
+    yaw: 0
+  - name: Stop_23
+    zone: 1
+    position: {x: 94.8, y: 53.2}
+    yaw: 117.4
+  - name: Stop_24
+    zone: 2
+    position: {x: 139.8, y: 32.2}
+    yaw: 130.9
+  - name: Stop_25
+    zone: 2
+    position: {x: 160.4, y: 30.5}
+    yaw: 164.1
+  - name: Stop_26
+    zone: 1
+    position: {x: 118.5, y: 17.4}
+    yaw: 180
+  - name: Stop_27
+    zone: 2
+    position: {x: 156.5, y: 17.8}
+    yaw: 180
+  - name: Stop_28
+    zone: 2
+    position: {x: 171.5, y: 14.5}
+    yaw: 90
+  - name: Stop_29
+    zone: 2
+    position: {x: 139.7, y: 14.5}
+    yaw: 90
+  barriers:
+  - name: Bar_South_Z2
+    closesZone: 2
+    position: {x: 133, y: 8}
+    yaw: 90
+  - name: Bar_Z45_Z2
+    closesZone: 2
+    position: {x: 133, y: 45}
+    yaw: 90
+  - name: Bar_ParkS_Z2
+    closesZone: 2
+    position: {x: 133, y: 78}
+    yaw: 90
+  - name: Bar_West_Z4
+    closesZone: 4
+    position: {x: 52, y: 83}
+    yaw: 0
+  - name: Bar_ParkW_Z4
+    closesZone: 4
+    position: {x: 93, y: 83}
+    yaw: 0
+  - name: Bar_East_Z3
+    closesZone: 3
+    position: {x: 193, y: 83}
+    yaw: 0
+  - name: Bar_117_Z4
+    closesZone: 4
+    position: {x: 153, y: 117}
+    yaw: 90
+  - name: Bar_140_Z4
+    closesZone: 4
+    position: {x: 153, y: 140}
+    yaw: 90
+  - name: Bar_Park_Z4
+    closesZone: 4
+    position: {x: 186, y: 103.9}
+    yaw: 77
