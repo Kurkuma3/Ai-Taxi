@@ -112,8 +112,27 @@ Source of truth: `docs/city_sketch.png` (hand drawing; scale bar 40 m = 200 px, 
 
 Verify: Taxi > Build City, console clean; in Play Mode drive the south road east — the car stops at the cones at x ≈ 131; the checks that were run are in the change log entry.
 
+## 10. Passengers and suitcase (models, Wave clip, prefabs)
+
+Source: `ArtSource/Passengers.blend` (Blender 5.3, built through Blender MCP by script; the taxi driver's rig and Idle/Walk actions were appended from `TaxiDriver.blend`). Export: `Assets/Art/Models/Passenger_A.fbx`, `Passenger_B.fbx`, `Suitcase.fbx`. Same style as the driver: bevelled blocks, flat shading, one material `Passenger` with a 16x1 palette `Assets/Art/Textures/PassengerPalette.png` (UVs in cell centres), remapped in Unity to `Assets/Art/Materials/Passenger.mat` (URP Lit, smoothness 0.05). Passengers and the suitcase share this one material.
+
+**Passenger_A, office worker** (752 tris): navy suit with a long jacket hem, white shirt V, red tie, dark side-parted hair, brown briefcase rigidly bound to `LowerArm.R`. Read from above: dark head and shoulders plus a brown block at the right hand.
+**Passenger_B, tourist** (784 tris): turquoise shirt with coral print, belly, khaki wide shorts, bare shins, white sneakers, sunglasses, wide cream panama (12-sided brim, 0.68 m across) and an orange backpack with straps. Read from above: a big cream disc plus an orange block.
+Neither has the driver's yellow cap or vest.
+
+**Rig.** Exactly the driver's 11 bones (same rest pose, rigid weights). Both FBX files export the armature under the same name `PassengerRig`, so the clip binding paths are identical and one Animator controller drives both models.
+
+**Clips** (24 fps, looping): `Idle` (2 s) and `Walk` (1 s) are the driver's actions; `Wave` (1 s, keys every 3 frames, Cycles modifiers, range 1–24) raises the **left** arm above the head (upper arm ~155–165° in the frontal plane, forearm sways ±24° so the hand sweeps 0.25–0.65 m sideways at 1.92–1.99 m height), the torso leans 3–4.5° away, the head tilts up 4°. Left arm because Passenger_A holds the briefcase in the right hand.
+
+**Suitcase** (104 tris): 0.40 x 0.25 x 0.60 m (shell 0.03–0.54 m, handle on top), magenta shell with a dark seam band, two foot rails and a top handle. Pivot at the bottom centre. Child empty `HandlePoint` at the grip centre, (0, 0.583, 0) in Unity, for attaching it to a hand when carried. No collider yet (gameplay will decide).
+
+**Unity.** `Assets/Editor/PassengerAssets.cs` (menu **Taxi > Setup Passengers**) mirrors `TaxiDriverAssets`: palette importer (point, no mips, uncompressed), material, FBX importers (Generic, file scale, imported normals, clips named Idle/Walk/Wave with Loop Time; the suitcase has no rig/animation), controller `Assets/Art/Animations/Passenger.controller` (float `Speed`, bool `Wave`; Idle ⇄ Walk at `Speed` 0.1, Idle ⇄ Wave on `Wave`, Wave → Walk when `Speed` rises, 0.2 s blends, Walk speed multiplier = `Speed`), and prefabs `Assets/Prefabs/Characters/Passenger_A.prefab`, `Passenger_B.prefab` (Animator with the controller, no root motion, `CullUpdateTransforms`, skin quality 1 bone) and `Assets/Prefabs/Props/Suitcase.prefab`. Nothing is placed in the scene and no gameplay code uses them yet.
+
+Verify: run **Taxi > Setup Passengers**, console clean; drag a passenger prefab into a scene, open the Animator window in Play Mode and toggle `Wave`. In Blender open `ArtSource/Passengers.blend` and play the `Wave` NLA track. What was checked: tri counts in Unity (752 / 784 / 104), all three clips import on both FBX files, the Wave clip from Passenger_A moves the left arm of a Passenger_B instance (shared controller binds). Play Mode was not run.
+
 ## Change log
 
+- 2026-11-15 — Passenger_A (office) and Passenger_B (tourist) models on the driver rig with a new Wave clip, suitcase prop with HandlePoint, shared palette material, Passenger controller and prefabs (`PassengerAssets`, menu Taxi > Setup Passengers).
 - 2026-11-13 — Automatic reverse when the stick points behind the car (config: `reverseEnterAngle`, `reverseExitAngle`, `reverseEnterSpeed`, `reverseMaxSpeed`); amber stick knob while reversing.
 - 2026-11-15 — Greybox city built from `docs/city_sketch.png` via `CityLayout` + `CityBuilder`: 22 road polylines, 2 turnarounds, 26 buildings, 29 passenger stops, 9 zone barriers, invisible walls; arena removed; spawns on the parking lot. Checked: 789 car-sized overlap samples along all road axes hit nothing; all 9 barriers have colliders; in Play Mode a coasting car (10–12 m/s) stops at the south and west barriers and runs the Z1 south road freely.
 - 2026-11-15 — Taxi driver character from Blender replaces the player capsule: FBX + palette, Generic rig, Idle/Walk clips, Animator driven by `PlayerAnimator` (config: `walkAnimSpeedMultiplier`, `walkAnimDampTime`).
