@@ -31,3 +31,6 @@ crashlytics-build.properties
 # Personal docs, not part of the repo
 /docs/TASK.pdf
 /docs/WORKFLOW.md
+
+# Claude Code: local per-machine settings
+.claude/settings.local.json
