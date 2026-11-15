@@ -27,6 +27,7 @@ Integrations: Unity MCP (scene, components, console), Blender MCP (simple assets
 - Mobile performance: no allocations in Update, no Find in Update, few materials and draw calls, lightweight effects.
 - UI is minimal, large, and thumb-reachable in portrait.
 - After changes made through MCP, check the Unity console for errors.
+- Never run tests or Play Mode automatically, only when I ask. Checking the console for compile errors is fine.
 - Never invent test results, timings or fps. If you did not run it, say so.
 - Not sure about a Unity API or setting? Say so and suggest checking the documentation.
 - After a feature: what was done, how to verify it, and a proposed commit message.
