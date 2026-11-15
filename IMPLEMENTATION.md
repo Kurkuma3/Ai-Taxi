@@ -76,7 +76,24 @@ File: `Assets/Scripts/CameraRig/TopDownCamera.cs`. Fixed-angle follow camera wit
 - `Assets/Tests/PlayMode/CoreLoopTests.cs` (`InputTestFixture`): simulated keyboard and touchscreen drive the real scene. Run from **Window > General > Test Runner** or headless:
   `Unity.exe -batchmode -projectPath . -runTests -testPlatform PlayMode -testResults results.xml`
 
+## 8. Taxi driver character (model, rig, Idle/Walk)
+
+Source: `ArtSource/TaxiDriver.blend` (Blender 5.3, built through Blender MCP by script). Export: `Assets/Art/Models/TaxiDriver.fbx`. Preview: `docs/taxidriver_preview.png`.
+
+**Mesh.** One object, 796 triangles, blocky boxes with a one-segment bevel for a chunky look, flat shaded. 1.80 m to the top of the head (1.88 m with the cap), origin at the feet, faces −Y in Blender → +Z in Unity. One material `TaxiDriver` with an 8×1 palette texture (`Assets/Art/Textures/TaxiDriverPalette.png`): every part's UVs sit in the centre of one colour cell (yellow cap/vest, white sleeves, dark trousers, black shoes/belt/visor/eyes, skin, brown hair). Palette import: point filter, no mipmaps, uncompressed, so cells never bleed. In Unity the Blender material is remapped to `Assets/Art/Materials/TaxiDriver.mat` (URP Lit, smoothness 0.05).
+
+**Rig.** Armature `TaxiDriverRig`, 11 bones: Hips → Spine → Head; UpperArm/LowerArm L+R (parented to Spine); UpperLeg/LowerLeg L+R (parented to Hips). Rigid binding: every vertex is in exactly one group with weight 1, so parts never stretch. Generic avatar in Unity, no root motion.
+
+**Clips** (24 fps, keyed about armature-space axes, Cycles F-modifiers for seamless loop handles, one NLA strip per clip, both import with Loop Time):
+- `Idle`, 2 s: spine 0→2° breathing lean, head counter-tilt, hips −8 mm, arms drift 3° outward.
+- `Walk`, 1 s: thighs ±32°, knees bend 5°→55° in the swing phase, arms ±28° in counter-phase with 10–30° elbow bend, hips bob ±2 cm and yaw ±5°, shoulders counter-rotate, 4° forward lean. The exported range is 1–24 so the loop frame is not duplicated.
+
+**Unity.** `Assets/Editor/TaxiDriverAssets.cs` (menu **Taxi > Setup Taxi Driver**, also called by SceneBootstrap) configures the importers, the material and builds `Assets/Art/Animations/TaxiDriver.controller`: float `Speed`, states Idle ⇄ Walk, transitions at `Speed` 0.1 with no exit time and 0.15 s blend; the Walk state uses `Speed` as its playback multiplier. `Assets/Scripts/Player/PlayerAnimator.cs` sets `Speed = planarSpeed / walkSpeed × walkAnimSpeedMultiplier` with `walkAnimDampTime` smoothing (`PlayerController.Speed` is the CharacterController's planar velocity, 0 while hidden). SceneBootstrap instantiates the FBX prefab under `Player/Visual` in place of the capsule; `SetVisible` keeps working because it toggles `Visual`.
+
+Verify: Play, walk with the stick — the driver steps in time with the speed, stops into the breathing idle; enter the car — the model hides; exit — it reappears beside the car. Feet sliding → raise `walkAnimSpeedMultiplier`.
+
 ## Change log
 
 - 2026-11-13 — Automatic reverse when the stick points behind the car (config: `reverseEnterAngle`, `reverseExitAngle`, `reverseEnterSpeed`, `reverseMaxSpeed`); amber stick knob while reversing.
+- 2026-11-15 — Taxi driver character from Blender replaces the player capsule: FBX + palette, Generic rig, Idle/Walk clips, Animator driven by `PlayerAnimator` (config: `walkAnimSpeedMultiplier`, `walkAnimDampTime`).
 - 2026-11-13 — EXIT CAR button removed. Exit is now "hold a finger on the stopped car" using the same ring as entering; `InputReader` gained hold-finger detection (`IsHoldTarget`, `HoldActive`, `HoldPos`); config: `exitHoldRadiusScreenFraction`.

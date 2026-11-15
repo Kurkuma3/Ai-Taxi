@@ -41,6 +41,10 @@ namespace Taxi
         [Header("Player on foot")]
         public float walkSpeed = 4f;
         public float playerTurnRateDegPerSec = 540f;
+        [Tooltip("Walk clip playback rate at full walk speed (1 = the 1 s cycle authored in Blender). Raise it if the feet slide.")]
+        public float walkAnimSpeedMultiplier = 1.2f;
+        [Tooltip("Smoothing of the Animator 'Speed' parameter, seconds.")]
+        public float walkAnimDampTime = 0.08f;
 
         [Header("Enter / exit")]
         public float enterRadius = 2.4f;

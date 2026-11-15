@@ -13,6 +13,8 @@ namespace Taxi
         [SerializeField] GameObject visual;
 
         public bool InputEnabled { get; set; }
+        /// <summary>Horizontal speed of the CharacterController, m/s. Zero while hidden (driving).</summary>
+        public float Speed { get; private set; }
 
         CharacterController cc;
         float verticalVelocity;
@@ -21,7 +23,7 @@ namespace Taxi
 
         void Update()
         {
-            if (!cc.enabled) return;
+            if (!cc.enabled) { Speed = 0f; return; }
             var i = InputReader.I;
             Vector3 move = Vector3.zero;
 
@@ -39,6 +41,8 @@ namespace Taxi
 
             verticalVelocity = cc.isGrounded ? -1f : verticalVelocity - 20f * Time.deltaTime;
             cc.Move((move + Vector3.up * verticalVelocity) * Time.deltaTime);
+            Vector3 v = cc.velocity;
+            Speed = new Vector2(v.x, v.z).magnitude;
         }
 
         public void SetVisible(bool visible)

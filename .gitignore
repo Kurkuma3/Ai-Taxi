@@ -34,3 +34,7 @@ crashlytics-build.properties
 
 # Claude Code: local per-machine settings
 .claude/settings.local.json
+
+# Blender backups
+*.blend1
+*.blend2

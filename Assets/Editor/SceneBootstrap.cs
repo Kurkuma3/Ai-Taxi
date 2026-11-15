@@ -30,7 +30,6 @@ namespace Taxi.EditorTools
             var matCurb = Mat("Curb", new Color(0.45f, 0.45f, 0.48f));
             var matTaxi = Mat("Taxi", new Color(1f, 0.78f, 0.1f));
             var matDark = Mat("Dark", new Color(0.12f, 0.12f, 0.14f));
-            var matPlayer = Mat("Player", new Color(0.2f, 0.5f, 0.95f));
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
             cfg = AssetDatabase.LoadAssetAtPath<GameplayConfig>(ConfigPath);
@@ -94,11 +93,23 @@ namespace Taxi.EditorTools
             cc.height = 1.8f;
             var playerVisual = new GameObject("Visual");
             playerVisual.transform.SetParent(player.transform, false);
-            Prim(PrimitiveType.Capsule, "Body", new Vector3(0, 0.9f, 0), new Vector3(0.7f, 0.9f, 0.7f), matPlayer, playerVisual.transform, false);
-            Prim(PrimitiveType.Cube, "Nose", new Vector3(0, 1.3f, 0.35f), new Vector3(0.25f, 0.2f, 0.3f), matDark, playerVisual.transform, false);
+            var driver = TaxiDriverAssets.Setup();
+            var model = (GameObject)PrefabUtility.InstantiatePrefab(driver.prefab, playerVisual.transform);
+            model.name = "TaxiDriver";
+            model.transform.localPosition = Vector3.zero;
+            model.transform.localRotation = Quaternion.identity;
+            var animator = model.GetComponent<Animator>();
+            if (animator == null) animator = model.AddComponent<Animator>();
+            animator.runtimeAnimatorController = driver.controller;
+            animator.applyRootMotion = false;
+            animator.cullingMode = AnimatorCullingMode.CullUpdateTransforms;
             var playerCtrl = player.AddComponent<PlayerController>();
             Set(playerCtrl, "config", cfg);
             Set(playerCtrl, "visual", playerVisual);
+            var playerAnim = player.AddComponent<PlayerAnimator>();
+            Set(playerAnim, "config", cfg);
+            Set(playerAnim, "player", playerCtrl);
+            Set(playerAnim, "animator", animator);
 
             // ---- Camera & light -----------------------------------------------------
             var cam = Camera.main;
