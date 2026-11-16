@@ -108,6 +108,9 @@ namespace Taxi.EditorTools
                 new CityLayout.Pocket { name = "Stop_27", zone = 2, position = V(156.5f, 17.8f), yaw = 180.0f },
                 new CityLayout.Pocket { name = "Stop_28", zone = 2, position = V(171.5f, 14.5f), yaw = 90.0f },
                 new CityLayout.Pocket { name = "Stop_29", zone = 2, position = V(139.7f, 14.5f), yaw = 90.0f },
+                // Start area (not in the sketch, added for Zone 1 variety): taxi depot in front of the garage, parking lot.
+                new CityLayout.Pocket { name = "Stop_Depot", zone = 1, position = V(63f, 38.5f), yaw = 90.0f },
+                new CityLayout.Pocket { name = "Stop_Parking", zone = 1, position = V(63f, 26f), yaw = 90.0f },
             };
             L.barriers = new[] {
                 new CityLayout.Barrier { name = "Bar_South_Z2", closesZone = 2, position = V(133.0f, 8.0f), yaw = 90.0f },

@@ -73,6 +73,9 @@ namespace Taxi
         [Tooltip("If no pair of stops fits the range, pick at random among this many pairs closest to it " +
                  "(1 = always the single closest, which repeats the same route).")]
         [Range(1, 8)] public int fallbackPairChoices = 3;
+        [Tooltip("The last N routes (A-B in either direction) are never offered again while any other pair exists. " +
+                 "This beats the distance range: a shorter new route is preferred over a repeat.")]
+        [Range(0, 8)] public int recentRoutesToAvoid = 2;
         [Tooltip("After a zone opens, this share of new trips starts or ends in it.")]
         [Range(0f, 1f)] public float newZoneTripChance = 0.5f;
         [Tooltip("How many trips after a zone opens the new-zone preference lasts.")]
@@ -92,6 +95,8 @@ namespace Taxi
         public float fareLabelHeight = 2.4f;
 
         [Header("Payment")]
+        [Tooltip("Money in the wallet when the game starts.")]
+        public int startMoney = 50;
         public float moneyCountUpTime = 0.8f;
         public int coinsPerPayment = 8;
         public float coinFlightTime = 0.55f;

@@ -51,6 +51,7 @@ MonoBehaviour:
   - {x: 80, y: 190}
   - {x: 100, y: 210}
   fallbackPairChoices: 3
+  recentRoutesToAvoid: 2
   newZoneTripChance: 0.5
   newZonePriorityTrips: 4
   stopRadius: 7
@@ -59,6 +60,7 @@ MonoBehaviour:
   passengerWalkMaxTime: 1.5
   nextTripDelay: 1
   fareLabelHeight: 2.4
+  startMoney: 50
   moneyCountUpTime: 0.8
   coinsPerPayment: 8
   coinFlightTime: 0.55

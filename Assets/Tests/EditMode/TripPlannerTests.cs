@@ -92,6 +92,30 @@ namespace Taxi.Tests
         }
 
         [Test]
+        public void RecentRoutesAreNotRepeatedEvenIfShorter()
+        {
+            // Zone 1 stops at x = 0, 50, 120 (pairs 50, 70, 120 m; range 80-150 holds only 0<->120).
+            // With 0<->120 as the last route, the planner must take a shorter route instead of repeating it.
+            var stops = Line();
+            var recent = new[] { TripPlanner.RouteKey(2, 0) };
+            var rng = new System.Random(8);
+            var scratch = new List<int>();
+            for (int k = 0; k < 100; k++)
+            {
+                Assert.IsTrue(TripPlanner.TryPlan(stops, z => Open(1, z), 1, 0, Rules(0.5f, 3), rng, -1, scratch, out var t, recent, 1));
+                Assert.AreNotEqual(TripPlanner.RouteKey(0, 2), TripPlanner.RouteKey(t.pickup, t.dropoff));
+            }
+        }
+
+        [Test]
+        public void RepeatsOnlyWhenNoOtherPairExists()
+        {
+            var stops = new List<StopInfo> { new StopInfo(Vector2.zero, 1), new StopInfo(new Vector2(100, 0), 1) };
+            var recent = new[] { TripPlanner.RouteKey(0, 1) };
+            Assert.IsTrue(TripPlanner.TryPlan(stops, z => Open(1, z), 1, 0, Rules(), new System.Random(9), -1, new List<int>(), out _, recent, 1));
+        }
+
+        [Test]
         public void NewZoneGetsAboutHalfOfTheTrips()
         {
             var stops = Line();

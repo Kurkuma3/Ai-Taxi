@@ -81,24 +81,31 @@ namespace Taxi
         /// - a random pair whose distance is inside the range for the highest open zone;
         /// - if none is inside, a random one of the fallbackChoices pairs closest to the range (normally the longest ones),
         ///   so the fallback does not repeat one route. Never fails while two usable stops exist.
+        /// - recent routes (either direction, see <see cref="RouteKey"/>) are never repeated while any other pair exists;
+        ///   this beats the distance range: a shorter new route is better than the same route again.
         /// avoidPickup (-1 = none) is skipped as a pickup when another choice exists, so the next passenger does not
         /// stand exactly where the last one got out.
+        /// Constraint strength: no-repeat > new-zone priority > avoid pickup > distance range.
         /// </summary>
         public static bool TryPlan(IReadOnlyList<StopInfo> stops, Func<int, bool> isZoneOpen, int highestOpenZone,
-            int priorityZone, in TripRules rules, System.Random rng, int avoidPickup, List<int> scratch, out Trip trip)
+            int priorityZone, in TripRules rules, System.Random rng, int avoidPickup, List<int> scratch, out Trip trip,
+            int[] recentRoutes = null, int recentCount = 0)
         {
             trip = default;
             int n = stops.Count;
             bool wantPriority = priorityZone > 0 && rng.NextDouble() < rules.newZoneChance;
             Vector2 range = rules.DistanceRange(highestOpenZone);
+            bool haveRecent = recentRoutes != null && recentCount > 0;
 
-            // Pass 0: priority filter (if wanted) + avoid pickup; each later pass relaxes one constraint.
-            for (int pass = 0; pass < 4; pass++)
+            // Each pass relaxes one more constraint; inside a pass an out-of-range pair is still accepted (fallback).
+            for (int pass = 0; pass < 5; pass++)
             {
+                bool useRecent = haveRecent && pass < 4;
                 bool usePriority = wantPriority && pass < 2;
                 bool useAvoid = avoidPickup >= 0 && (pass == 0 || pass == 2);
                 if (pass == 1 && !wantPriority) continue;      // same as pass 2/3 then
                 if (pass == 2 && avoidPickup < 0) continue;
+                if (pass == 4 && !haveRecent) continue;
 
                 scratch.Clear();
                 int k = Mathf.Clamp(rules.fallbackChoices, 1, MaxFallback), found = 0;
@@ -113,6 +120,7 @@ namespace Taxi
                         int zj = stops[j].zone;
                         if (zj < 1 || !isZoneOpen(zj)) continue;
                         if (usePriority && zi != priorityZone && zj != priorityZone) continue;
+                        if (useRecent && IsRecent(RouteKey(i, j), recentRoutes, recentCount)) continue;
                         float d = Vector2.Distance(stops[i].position, stops[j].position);
                         if (d >= range.x && d <= range.y) { scratch.Add(i * n + j); continue; }
                         if (scratch.Count > 0) continue;   // something fits: the fallback is not needed
@@ -132,6 +140,15 @@ namespace Taxi
                 trip = new Trip(pi, pj, za, zb, dist, Fare(rules, dist, za, zb));
                 return true;
             }
+            return false;
+        }
+
+        /// <summary>Direction-independent route id: A->B and B->A are the same route.</summary>
+        public static int RouteKey(int a, int b) => a < b ? (a << 16) | b : (b << 16) | a;
+
+        static bool IsRecent(int key, int[] recent, int count)
+        {
+            for (int k = 0; k < count && k < recent.Length; k++) if (recent[k] == key) return true;
             return false;
         }
 

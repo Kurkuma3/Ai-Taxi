@@ -112,6 +112,14 @@ namespace Taxi
             if (fareLabel != null && fareLabel.gameObject.activeSelf) fareLabel.gameObject.SetActive(false);
         }
 
+        /// <summary>Shows a value at once, no animation (game start, spending).</summary>
+        public void SetMoney(int value)
+        {
+            shownMoney = countTo = value;
+            countStart = -1f;
+            if (moneyText != null) moneyText.text = "$" + value;
+        }
+
         /// <summary>Coins fly from the world point to the counter, then the counter counts up to newTotal.</summary>
         public void PlayPayment(Vector3 fromWorld, int newTotal)
         {

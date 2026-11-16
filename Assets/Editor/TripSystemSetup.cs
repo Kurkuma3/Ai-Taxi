@@ -42,6 +42,7 @@ namespace Taxi.EditorTools
             var zones = GetOrAdd<ZoneProgress>(systems);
             Set(zones, "config", cfg);
             var wallet = GetOrAdd<Wallet>(systems);
+            Set(wallet, "config", cfg);
 
             // ---- Route hint ----
             var hintGo = GameObject.Find("RouteHint");

@@ -136,7 +136,7 @@ Files: `Assets/Scripts/Trips/` (`TripPlanner`, `TripManager`, `ZoneProgress`, `W
 
 **Zones.** `ZoneProgress` keeps which zones are open (Zone 1 from the start) and `HighestOpen`. `Open(z)` makes z the *new zone* for the next `newZonePriorityTrips` (4) planned trips. Buying zones at barriers is the next task. For now, in the editor only, keys **1–4** open a zone and hide its barriers. A debug shortcut: the Z3/Z4 barrier rule is not applied there.
 
-**Stop zones.** `PassengerStop.ResolvedZone` takes the zone from the `zone` field. If the field is 0, it uses the nearest parent named `Zone N` or `ZN`. Stops without a zone are ignored with a warning. Menu **Taxi > Validate Passenger Stops** counts the stops per zone (current scene: Z1 = 3, Z2 = 8, Z3 = 7, Z4 = 11, none missing).
+**Stop zones.** `PassengerStop.ResolvedZone` takes the zone from the `zone` field. If the field is 0, it uses the nearest parent named `Zone N` or `ZN`. Stops without a zone are ignored with a warning. Menu **Taxi > Validate Passenger Stops** counts the stops per zone (current scene: Z1 = 5, Z2 = 8, Z3 = 7, Z4 = 11, none missing). Two Zone 1 stops were added on the start lot, which the sketch does not have: `Stop_Depot` (63, 38.5) in front of the taxi garage and `Stop_Parking` (63, 26) at the south end of the parking lot. Both are added to `CitySketchData`, `CityLayout.asset` and the scene. They lie fully inside the lot, so the curbs are unchanged, and they overlap no collider.
 
 **Fare.** `round_half_up((baseFare + farePerMeter × metres) × max(mult[from], mult[to]))`, with $10 + $0.15/m and multipliers ×1.0 / 1.2 / 1.4 / 1.7. Metres are the straight line between the two stop markers. The label above the passenger shows this final number.
 
@@ -146,20 +146,23 @@ Files: `Assets/Scripts/Trips/` (`TripPlanner`, `TripManager`, `ZoneProgress`, `W
 3. A random pair inside the distance range of the highest open zone is chosen.
 4. If no pair is inside the range, a random one of the `fallbackPairChoices` (3) pairs closest to the range is chosen. The brief said "the longest one", but that repeats a single route forever, so this was changed with the author's approval.
 5. The last drop-off stop is avoided as the next pickup when another option exists.
-6. Each later pass relaxes one rule, so the planner returns a trip whenever two usable stops exist.
+6. **No repeated routes:** the last `recentRoutesToAvoid` (2) routes, A–B in either direction, are excluded while any other pair exists. This rule beats the distance range: a shorter new route is preferred over a repeat.
+7. Each later pass relaxes one rule, so the planner returns a trip whenever two usable stops exist. Constraint strength: no-repeat > new-zone priority > avoid pickup > distance range.
 
 A `Trip` is an immutable snapshot, so a zone opening mid-ride does not change the current trip.
 
-**Distance ranges.** The brief's 80–150 / 150–250 / 200–300 / 250–350 m do not fit this map: the longest stop pair is 68 m inside Zone 1 and 209 m over the whole city, so every trip fell back to one pair. With the author's approval the defaults were fitted to the map: **40–70 / 60–115 / 80–190 / 100–210 m**. Planner run on the real 29 stops (2000 trips per stage, editor script, not Play Mode):
+**Distance ranges.** The brief's 80–150 / 150–250 / 200–300 / 250–350 m do not fit this map: the longest stop pair is 68 m inside Zone 1 and 209 m over the whole city, so every trip fell back to one pair. With the author's approval the defaults were fitted to the map: **40–70 / 60–115 / 80–190 / 100–210 m**. Planner run on the real 31 stops with the no-repeat rule (2000 trips per stage, editor script, not Play Mode):
 
-| Open up to | In range | Distance | Fare | Distinct pairs | Same route as previous |
+| Open up to | In range | Distance | Fare | Routes used | Repeat of the last 2 routes |
 |---|---|---|---|---|---|
-| Z1 | 100% | 43–68 m | $16–20 | 3 | 50% (only 3 stops in Z1) |
-| Z2 | 100% | 61–115 m | $20–33 | 42 | 3% |
-| Z3 | 100% | 80–176 m | $27–51 | 132 | 1% |
-| Z4 | 100% | 100–209 m | $32–70 | 360 | 0% |
+| Z1 | 100% | 42–68 m | $16–20 | 6 (14–18% each) | 0 |
+| Z2 | 100% | 61–115 m | $20–33 | 33 | 0 |
+| Z3 | 100% | 80–186 m | $26–53 | 90 | 0 |
+| Z4 | 100% | 100–209 m | $31–70 | 218 | 0 |
 
-With the new-zone priority on, 91% of trips touch a newly opened Z3 and 87% touch a newly opened Z4. Z2 shows 98% even without priority, because Z1 has only 3 stops.
+With the new-zone priority on (measured before the depot/parking stops), 91% of trips touched a newly opened Z3 and 87% a newly opened Z4.
+
+**Start money.** `Wallet` starts with `startMoney` ($50); `TripManager` shows it on the counter at start (`Hud.SetMoney`, no animation).
 
 **Trip state machine** (`TripManager`, one passenger at a time):
 - `NoTrip` → after `nextTripDelay`, plan a trip → `Waiting`.
@@ -176,16 +179,17 @@ No state waits for something the player cannot do.
 
 **Scene.** `TripSystemSetup` (menu **Taxi > Setup Trip System**) adds the components, the RouteHint object and the HUD elements to the open scene. It does not rebuild the scene, so hand edits survive, and it is idempotent. `SceneBootstrap` calls it as well.
 
-**Tests.** `Assets/Tests/EditMode/TripPlannerTests.cs` covers the fare formula, closed zones, in-range picks, both fallback modes, the new-zone share, pickup avoidance and stop zone parsing. Written but **not run** yet (Window > General > Test Runner > EditMode).
+**Tests.** `Assets/Tests/EditMode/TripPlannerTests.cs` covers the fare formula, closed zones, in-range picks, both fallback modes, no repeated routes (and repeating only when nothing else exists), the new-zone share, pickup avoidance and stop zone parsing. Written but **not run** yet (Window > General > Test Runner > EditMode).
 
 Verify:
 - In Play Mode, get in the car: a passenger appears with a green arrow and ring, and waves as you approach. Stop next to the passenger: they walk to the door. The arrow turns amber. Stop at the amber ring: coins fly to the counter with a ding.
 - Press 2 in the editor: Zone 2 opens, its barriers disappear, and most of the next 4 trips involve Zone 2.
 
-Known: Zone 1 has only 3 stops, so its trips repeat (a map change, the author's call).
+Known: `Stop_Depot` is 31–35 m from Stop_20 and Stop_23 (below the 40 m minimum), so in Zone 1 it only pairs with Stop_26.
 
 ## Change log
 
+- 2026-11-16 — Zone 1 variety: `Stop_Depot` and `Stop_Parking` on the start lot; routes are not repeated (last 2, either direction, beats the distance range; config `recentRoutesToAvoid`); wallet starts with $50 (config `startMoney`).
 - 2026-11-16 — Trip loop: one passenger at a time (wait, board, ride, alight, pay), fare by zone multiplier, cross-zone trips between open zones, distance range by highest open zone (fitted to the map), new-zone priority, coins + count-up + procedural ding, route arrow and target ring; `Taxi > Setup Trip System`, `Taxi > Validate Passenger Stops`; editor keys 1–4 open zones.
 - 2026-11-15 — Passenger_A (office) and Passenger_B (tourist) models on the driver rig with a new Wave clip, suitcase prop with HandlePoint, shared palette material, Passenger controller and prefabs (`PassengerAssets`, menu Taxi > Setup Passengers).
 - 2026-11-13 — Automatic reverse when the stick points behind the car (config: `reverseEnterAngle`, `reverseExitAngle`, `reverseEnterSpeed`, `reverseMaxSpeed`); amber stick knob while reversing.

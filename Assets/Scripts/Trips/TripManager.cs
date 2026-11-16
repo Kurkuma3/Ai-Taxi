@@ -45,6 +45,8 @@ namespace Taxi
         float timer;
         int lastDropoff = -1;
         bool warnedNoTrip;
+        int[] recentRoutes;     // ring buffer of TripPlanner.RouteKey values, newest overwrites oldest
+        int recentCount, recentNext;
 
         void Start()
         {
@@ -53,6 +55,8 @@ namespace Taxi
             isZoneOpen = zones.IsOpen;
             CollectStops();
             scratch = new List<int>(stops.Count * stops.Count);
+            recentRoutes = new int[Mathf.Max(0, config.recentRoutesToAvoid)];
+            hud.SetMoney(wallet.Money);
 
             passengers = new Passenger[passengerPrefabs.Length];
             for (int i = 0; i < passengerPrefabs.Length; i++)
@@ -160,13 +164,20 @@ namespace Taxi
 
         void PlanNext()
         {
-            if (!TripPlanner.TryPlan(stopInfos, isZoneOpen, zones.HighestOpen, zones.PriorityZone, rules, rng, lastDropoff, scratch, out var trip))
+            if (!TripPlanner.TryPlan(stopInfos, isZoneOpen, zones.HighestOpen, zones.PriorityZone, rules, rng, lastDropoff, scratch, out var trip,
+                    recentRoutes, recentCount))
             {
                 if (!warnedNoTrip) { Debug.LogWarning("[Taxi] No trip possible (fewer than two stops in open zones)"); warnedNoTrip = true; }
                 timer = 1f;
                 return;
             }
             zones.ConsumePriorityTrip();
+            if (recentRoutes.Length > 0)
+            {
+                recentRoutes[recentNext] = TripPlanner.RouteKey(trip.pickup, trip.dropoff);
+                recentNext = (recentNext + 1) % recentRoutes.Length;
+                if (recentCount < recentRoutes.Length) recentCount++;
+            }
             CurrentTrip = trip;
             passenger = passengers[rng.Next(passengers.Length)];
             passenger.SetVisible(true);
