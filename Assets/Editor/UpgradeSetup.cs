@@ -18,7 +18,9 @@ namespace Taxi.EditorTools
         // Layout, not gameplay tuning: a row on the paved part of the start lot, below the garage, between the
         // Stop_Parking pocket (z 24.5..27.5) and the Stop_Depot pocket (z 37..40), west of the exit road and of the
         // car spawn; the player spawns right next to it.
-        static readonly Vector3[] PadPositions = { new Vector3(58.6f, 0f, 31.8f), new Vector3(61.6f, 0f, 31.8f), new Vector3(64.6f, 0f, 31.8f) };
+        // 4 m apart so the one-line signs ("Fare Meter Lv1 · $120" is ~3.5 m) fit side by side; the row ends at x 69.3,
+        // clear of the car spawn (body from x 70).
+        static readonly Vector3[] PadPositions = { new Vector3(59.4f, 0f, 31.8f), new Vector3(63.4f, 0f, 31.8f), new Vector3(67.4f, 0f, 31.8f) };
         static readonly UpgradeType[] PadTypes = { UpgradeType.Engine, UpgradeType.Steering, UpgradeType.FareMeter };
         const float SignTilt = 55f;   // degrees back, so the board reads from the high top-down camera
 
@@ -97,14 +99,14 @@ namespace Taxi.EditorTools
             tilt.SetParent(sign, false);
             tilt.localPosition = new Vector3(0f, 2.3f, 0f);
             tilt.localRotation = Quaternion.Euler(SignTilt, 0f, 0f);
-            Cube("Board", tilt, Vector3.zero, new Vector3(2.9f, 1.5f, 0.08f), boardMat);
+            Cube("Board", tilt, Vector3.zero, new Vector3(3.7f, 0.8f, 0.08f), boardMat);
             var textGo = new GameObject("Label");
             textGo.transform.SetParent(tilt, false);
             textGo.transform.localPosition = new Vector3(0f, 0f, -0.06f);
             var tm = textGo.AddComponent<TextMesh>();
             tm.text = Upgrades.DisplayName(type);
             tm.fontSize = 64;
-            tm.characterSize = 0.075f;
+            tm.characterSize = 0.055f;
             tm.lineSpacing = 0.9f;
             tm.anchor = TextAnchor.MiddleCenter;
             tm.alignment = TextAlignment.Center;

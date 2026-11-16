@@ -231,7 +231,7 @@ Known: `Stop_Depot` is 31–35 m from Stop_20 and Stop_23 (below the 40 m minimu
 
 Files: `Assets/Scripts/Upgrades/` (`Upgrades`, `UpgradePad`, `UpgradeShop`), editor `Assets/Editor/UpgradeSetup.cs` (menu **Taxi > Setup Upgrades**, also called by SceneBootstrap). Config header **Upgrades (garage pads)**.
 
-**Pads.** Three yellow discs in a row on the paved start lot below the garage, between the Stop_Parking and Stop_Depot pockets, right next to the player spawn: Engine (58.6, 31.8), Steering (61.6, 31.8), Fare Meter (64.6, 31.8). Each has a sign on a post behind it (toward the garage, so it never hides the player on the pad), tilted 55° back so it reads from the top-down camera: "Engine" / "Lv1 · $80", or "Engine" / "MAX". There are no colliders. Checked: no collider other than the ground within 1.3 m of any pad, and an editor render from the foot camera shows the signs readable. The first spot (in front of the garage's east half) was moved because two pads sat on the exit road.
+**Pads.** Three yellow discs in a row on the paved start lot below the garage, between the Stop_Parking and Stop_Depot pockets, right next to the player spawn: Engine (59.4, 31.8), Steering (63.4, 31.8), Fare Meter (67.4, 31.8), 4 m apart. Each has a sign on a post behind it (toward the garage, so it never hides the player on the pad), tilted 55° back so it reads from the top-down camera. The sign is one line: "Engine Lv1 · $80", or "Engine MAX" at the top level. The board is 3.7 m wide with character size 0.055; the longest text, "Fare Meter Lv1 · $120", is about 3.5 m wide. The row ends at x 69.3, clear of the car spawn. There are no colliders. Checked: no collider other than the ground within 1.3 m of any pad, and an editor render from the foot camera shows the signs readable. The first spot (in front of the garage's east half) was moved because two pads sat on the exit road.
 
 **Buying** (`UpgradeShop`, on foot only). Standing within `upgradePadRadius` (1.4 m) of a pad:
 - enough money: the action ring fills over `upgradeBuyTime` (0.8 s), then the price is paid, coins fly from the counter to the pad (`Hud.PlaySpend`), a pop plays (pitch 1.25), the disc and the sign punch, and the sign shows the next level;
@@ -245,7 +245,7 @@ After a purchase that pad re-arms only once the player steps off, so standing st
 - Fare Meter: fare × (1 + `fareMeterPerLevel` × level), +10% per level, $120 / $240. It applies in `TripPlanner.Fare` (`TripRules.fareBonus`) before rounding and before the luggage bonus. Buying it re-prices the waiting orders at once (the pill punches). The ride in progress keeps its fare.
 `CarController` and `TripManager` hold an optional `Upgrades` reference (null = no bonus).
 
-Verify: Taxi > Reset Save, Play, get $80 or more, walk onto the Engine pad: the ring fills, $80 flies out, the sign reads "Lv2 · $160", and the car pulls away faster. With less money the sign blinks red. Buy Fare Meter while orders wait: their prices go up and punch. Restart: the levels are kept. Play Mode was not run for this feature.
+Verify: Taxi > Reset Save, Play, get $80 or more, walk onto the Engine pad: the ring fills, $80 flies out, the sign reads "Engine Lv2 · $160", and the car pulls away faster. With less money the sign blinks red. Buy Fare Meter while orders wait: their prices go up and punch. Restart: the levels are kept. Play Mode was not run for this feature.
 
 ## Change log
 

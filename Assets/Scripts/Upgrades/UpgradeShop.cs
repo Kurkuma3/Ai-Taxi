@@ -77,10 +77,10 @@ namespace Taxi
         void RefreshLabel(UpgradePad p)
         {
             string name = Upgrades.DisplayName(p.type);
-            // Two lines so the sign fits the pad width: "Engine" / "Lv1 · $80" (or "MAX").
+            // One line: "Engine Lv1 · $80", or "Engine MAX" at the top level.
             p.SetText(upgrades.IsMax(p.type)
-                ? name + "\nMAX"
-                : name + "\nLv" + (upgrades.Level(p.type) + 1) + " · $" + upgrades.NextPrice(p.type));
+                ? name + " MAX"
+                : name + " Lv" + (upgrades.Level(p.type) + 1) + " · $" + upgrades.NextPrice(p.type));
         }
 
         UpgradePad PadUnder(Vector3 pos)
