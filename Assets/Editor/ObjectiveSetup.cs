@@ -42,6 +42,8 @@ namespace Taxi.EditorTools
             var log = GetOrAdd<ObjectiveLog>(systems);
             Set(log, "tracker", tracker);
             GetOrAdd<DebugPanel>(systems);
+            var reset = GetOrAdd<LaunchReset>(systems);
+            Set(reset, "config", cfg);
             EditorSceneManager.MarkSceneDirty(systems.scene);
             Debug.Log("[Taxi] Objectives set up on " + systems.name);
         }

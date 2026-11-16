@@ -206,6 +206,11 @@ namespace Taxi
         [Tooltip("Sign blink rate (per second) when the player cannot afford the next level.")]
         public float upgradeBlinkRate = 5f;
 
+        [Header("Save")]
+        [Tooltip("Reset everything on every launch: money, open zones (barriers back), upgrades, objective progress. " +
+                 "The game always starts with the intro. Turn off to keep progress between launches.")]
+        public bool resetProgressOnLaunch = true;
+
         [Header("Objectives")]
         [Tooltip("The 10 objectives in order. The intro (walk to the taxi, get in) runs before the first one.")]
         public ObjectiveDef[] objectives =

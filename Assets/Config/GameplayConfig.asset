@@ -113,6 +113,7 @@ MonoBehaviour:
   upgradePadRadius: 1.4
   upgradeBuyTime: 0.8
   upgradeBlinkRate: 5
+  resetProgressOnLaunch: 1
   objectives:
   - title: First fare
     kind: 0
