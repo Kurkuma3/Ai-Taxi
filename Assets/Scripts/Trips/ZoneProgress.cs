@@ -4,14 +4,15 @@ using UnityEngine;
 namespace Taxi
 {
     /// <summary>
-    /// Which zones are open. Zone 1 is open from the start. Opening a zone makes it the "new zone": for the next
+    /// Which zones are open. Zone 1 is open from the start. Open zones are saved (PlayerPrefs bitmask) and restored
+    /// on launch without the new-zone priority. Opening a zone makes it the "new zone": for the next
     /// newZonePriorityTrips trips the planner prefers pairs that start or end there.
-    /// Buying zones at barriers is not written yet; in the editor, keys 1-4 open a zone for testing
-    /// (and hide that zone's barriers so you can drive in).
+    /// Zones are bought at barriers (BarrierShop). Editor only: keys 1-4 open a zone for testing.
     /// </summary>
     public class ZoneProgress : MonoBehaviour
     {
         public const int ZoneCount = 4;
+        public const string SaveKey = "Taxi.OpenZones";
 
         [SerializeField] GameplayConfig config;
 
@@ -27,13 +28,17 @@ namespace Taxi
 
         void Awake()
         {
-            open[1] = true;
-            HighestOpen = 1;
+            int mask = PlayerPrefs.GetInt(SaveKey, 1 << 1) | (1 << 1);   // Zone 1 is always open
+            for (int z = 1; z <= ZoneCount; z++)
+            {
+                open[z] = (mask & (1 << z)) != 0;
+                if (open[z]) HighestOpen = z;
+            }
         }
 
         public bool IsOpen(int zone) => zone >= 1 && zone <= ZoneCount && open[zone];
 
-        /// <summary>Opens a zone. Ignored if it is already open or out of range.</summary>
+        /// <summary>Opens a zone and saves. Ignored if it is already open or out of range.</summary>
         public bool Open(int zone)
         {
             if (zone < 1 || zone > ZoneCount || open[zone]) return false;
@@ -41,6 +46,7 @@ namespace Taxi
             if (zone > HighestOpen) HighestOpen = zone;
             newestZone = zone;
             priorityTripsLeft = config.newZonePriorityTrips;
+            Save();
             ZoneOpened?.Invoke(zone);
             return true;
         }
@@ -51,7 +57,16 @@ namespace Taxi
             if (priorityTripsLeft > 0) priorityTripsLeft--;
         }
 
+        void Save()
+        {
+            int mask = 0;
+            for (int z = 1; z <= ZoneCount; z++) if (open[z]) mask |= 1 << z;
+            PlayerPrefs.SetInt(SaveKey, mask);
+            PlayerPrefs.Save();
+        }
+
 #if UNITY_EDITOR
+        // Debug shortcuts exist only in the editor; release builds compile without them.
         void Update()
         {
             var kb = UnityEngine.InputSystem.Keyboard.current;
@@ -64,11 +79,7 @@ namespace Taxi
 
         void DebugOpen(int zone)
         {
-            if (!Open(zone)) return;
-            foreach (var root in gameObject.scene.GetRootGameObjects())
-                foreach (var b in root.GetComponentsInChildren<ZoneBarrier>())
-                    if (b.closesZone == zone) b.gameObject.SetActive(false);
-            Debug.Log("[Taxi] Debug: zone " + zone + " opened");
+            if (Open(zone)) Debug.Log("[Taxi] Debug: zone " + zone + " opened (barriers update through BarrierShop)");
         }
 #endif
     }

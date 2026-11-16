@@ -714,6 +714,10 @@ PrefabInstance:
       propertyPath: price
       value: 150
       objectReference: {fileID: 0}
+    - target: {fileID: 4639251461378132074, guid: 6d9923fb11d7f964196a5058fe5eeca7, type: 3}
+      propertyPath: forwardZone
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 5524633505468631031, guid: 6d9923fb11d7f964196a5058fe5eeca7, type: 3}
       propertyPath: m_Text
       value: $150
@@ -2525,8 +2529,16 @@ PrefabInstance:
       value: 600
       objectReference: {fileID: 0}
     - target: {fileID: 4639251461378132074, guid: 6d9923fb11d7f964196a5058fe5eeca7, type: 3}
+      propertyPath: otherZone
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 4639251461378132074, guid: 6d9923fb11d7f964196a5058fe5eeca7, type: 3}
       propertyPath: closesZone
       value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 4639251461378132074, guid: 6d9923fb11d7f964196a5058fe5eeca7, type: 3}
+      propertyPath: forwardZone
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 5524633505468631031, guid: 6d9923fb11d7f964196a5058fe5eeca7, type: 3}
       propertyPath: m_Text
@@ -4478,6 +4490,10 @@ PrefabInstance:
     - target: {fileID: 4639251461378132074, guid: 6d9923fb11d7f964196a5058fe5eeca7, type: 3}
       propertyPath: price
       value: 150
+      objectReference: {fileID: 0}
+    - target: {fileID: 4639251461378132074, guid: 6d9923fb11d7f964196a5058fe5eeca7, type: 3}
+      propertyPath: forwardZone
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 5524633505468631031, guid: 6d9923fb11d7f964196a5058fe5eeca7, type: 3}
       propertyPath: m_Text
@@ -7096,6 +7112,7 @@ GameObject:
   - component: {fileID: 460561911}
   - component: {fileID: 460561910}
   - component: {fileID: 460561909}
+  - component: {fileID: 460561912}
   m_Layer: 0
   m_Name: Systems
   m_TagString: Untagged
@@ -7198,6 +7215,25 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Taxi.Runtime::Taxi.ZoneProgress
   config: {fileID: 11400000, guid: 74d7e2b5b595a1549aca00f81d139ef4, type: 2}
+--- !u!114 &460561912
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 460561905}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8c8d47c31b098a94bb9b7b9b3275be5b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Taxi.Runtime::Taxi.BarrierShop
+  config: {fileID: 11400000, guid: 74d7e2b5b595a1549aca00f81d139ef4, type: 2}
+  car: {fileID: 1151517011}
+  playerState: {fileID: 460561906}
+  zones: {fileID: 460561911}
+  wallet: {fileID: 460561910}
+  hud: {fileID: 1110557563}
+  trips: {fileID: 460561909}
 --- !u!1 &465454427
 GameObject:
   m_ObjectHideFlags: 0
@@ -7361,7 +7397,15 @@ PrefabInstance:
       value: 600
       objectReference: {fileID: 0}
     - target: {fileID: 4639251461378132074, guid: 6d9923fb11d7f964196a5058fe5eeca7, type: 3}
+      propertyPath: otherZone
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 4639251461378132074, guid: 6d9923fb11d7f964196a5058fe5eeca7, type: 3}
       propertyPath: closesZone
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 4639251461378132074, guid: 6d9923fb11d7f964196a5058fe5eeca7, type: 3}
+      propertyPath: forwardZone
       value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 5524633505468631031, guid: 6d9923fb11d7f964196a5058fe5eeca7, type: 3}
@@ -10609,8 +10653,16 @@ PrefabInstance:
       value: 600
       objectReference: {fileID: 0}
     - target: {fileID: 4639251461378132074, guid: 6d9923fb11d7f964196a5058fe5eeca7, type: 3}
+      propertyPath: otherZone
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 4639251461378132074, guid: 6d9923fb11d7f964196a5058fe5eeca7, type: 3}
       propertyPath: closesZone
       value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 4639251461378132074, guid: 6d9923fb11d7f964196a5058fe5eeca7, type: 3}
+      propertyPath: forwardZone
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 5524633505468631031, guid: 6d9923fb11d7f964196a5058fe5eeca7, type: 3}
       propertyPath: m_Text
@@ -14072,6 +14124,10 @@ PrefabInstance:
       propertyPath: closesZone
       value: 4
       objectReference: {fileID: 0}
+    - target: {fileID: 4639251461378132074, guid: 6d9923fb11d7f964196a5058fe5eeca7, type: 3}
+      propertyPath: forwardZone
+      value: 4
+      objectReference: {fileID: 0}
     - target: {fileID: 5524633505468631031, guid: 6d9923fb11d7f964196a5058fe5eeca7, type: 3}
       propertyPath: m_Text
       value: $600
@@ -17148,6 +17204,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4639251461378132074, guid: 6d9923fb11d7f964196a5058fe5eeca7, type: 3}
       propertyPath: closesZone
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 4639251461378132074, guid: 6d9923fb11d7f964196a5058fe5eeca7, type: 3}
+      propertyPath: forwardZone
       value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 5524633505468631031, guid: 6d9923fb11d7f964196a5058fe5eeca7, type: 3}
@@ -20986,7 +21046,15 @@ PrefabInstance:
       value: 300
       objectReference: {fileID: 0}
     - target: {fileID: 4639251461378132074, guid: 6d9923fb11d7f964196a5058fe5eeca7, type: 3}
+      propertyPath: otherZone
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 4639251461378132074, guid: 6d9923fb11d7f964196a5058fe5eeca7, type: 3}
       propertyPath: closesZone
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 4639251461378132074, guid: 6d9923fb11d7f964196a5058fe5eeca7, type: 3}
+      propertyPath: forwardZone
       value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 5524633505468631031, guid: 6d9923fb11d7f964196a5058fe5eeca7, type: 3}
@@ -27780,8 +27848,16 @@ PrefabInstance:
       value: 600
       objectReference: {fileID: 0}
     - target: {fileID: 4639251461378132074, guid: 6d9923fb11d7f964196a5058fe5eeca7, type: 3}
+      propertyPath: otherZone
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 4639251461378132074, guid: 6d9923fb11d7f964196a5058fe5eeca7, type: 3}
       propertyPath: closesZone
       value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 4639251461378132074, guid: 6d9923fb11d7f964196a5058fe5eeca7, type: 3}
+      propertyPath: forwardZone
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 5524633505468631031, guid: 6d9923fb11d7f964196a5058fe5eeca7, type: 3}
       propertyPath: m_Text
@@ -29679,6 +29755,10 @@ PrefabInstance:
     - target: {fileID: 4639251461378132074, guid: 6d9923fb11d7f964196a5058fe5eeca7, type: 3}
       propertyPath: price
       value: 150
+      objectReference: {fileID: 0}
+    - target: {fileID: 4639251461378132074, guid: 6d9923fb11d7f964196a5058fe5eeca7, type: 3}
+      propertyPath: forwardZone
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 5524633505468631031, guid: 6d9923fb11d7f964196a5058fe5eeca7, type: 3}
       propertyPath: m_Text

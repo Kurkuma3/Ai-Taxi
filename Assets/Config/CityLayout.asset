@@ -575,35 +575,44 @@ MonoBehaviour:
     closesZone: 2
     position: {x: 133, y: 8}
     yaw: 90
+    otherZone: 1
   - name: Bar_Z45_Z2
     closesZone: 2
     position: {x: 133, y: 45}
     yaw: 90
+    otherZone: 1
   - name: Bar_ParkS_Z2
     closesZone: 2
     position: {x: 133, y: 78}
     yaw: 90
+    otherZone: 1
   - name: Bar_West_Z4
     closesZone: 4
     position: {x: 52, y: 83}
     yaw: 0
+    otherZone: 1
   - name: Bar_ParkW_Z4
     closesZone: 4
     position: {x: 93, y: 83}
     yaw: 0
+    otherZone: 1
   - name: Bar_East_Z3
     closesZone: 3
     position: {x: 193, y: 83}
     yaw: 0
+    otherZone: 2
   - name: Bar_117_Z4
     closesZone: 4
     position: {x: 153, y: 117}
     yaw: 90
+    otherZone: 3
   - name: Bar_140_Z4
     closesZone: 4
     position: {x: 153, y: 140}
     yaw: 90
+    otherZone: 3
   - name: Bar_Park_Z4
     closesZone: 4
     position: {x: 186, y: 103.9}
     yaw: 77
+    otherZone: 3

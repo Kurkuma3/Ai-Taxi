@@ -122,6 +122,21 @@ namespace Taxi
         [Tooltip("Delay between consecutive coins, seconds.")]
         public float coinStagger = 0.05f;
 
+        [Header("Zones for sale")]
+        [Tooltip("Price per zone (element 0 = Zone 1, free).")]
+        public int[] zonePrices = { 0, 150, 300, 600 };
+        [Tooltip("Buy area in front of a barrier: up to this far from it (along the road), on the open side.")]
+        public float barrierBuyRadius = 6f;
+        [Tooltip("Buy area half width across the road. Kept under the 5 m road half width so a car stopped at a " +
+                 "nearby passenger pocket does not buy by accident.")]
+        public float barrierBuyHalfWidth = 4.5f;
+        [Tooltip("Seconds the car must stay stopped there for the ring to fill.")]
+        public float barrierBuyTime = 1.0f;
+        [Tooltip("Price sign blink rate (per second) when the player cannot afford the zone.")]
+        public float barrierBlinkRate = 5f;
+        [Tooltip("Barrier pop-out animation length, seconds.")]
+        public float barrierVanishTime = 0.45f;
+
         [Header("Route hint")]
         [Tooltip("Distance from the car (or the player on foot) at which the ground arrow circles.")]
         public float routeArrowRadius = 3.6f;

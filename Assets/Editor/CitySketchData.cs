@@ -120,10 +120,11 @@ namespace Taxi.EditorTools
                 new CityLayout.Barrier { name = "Bar_ParkS_Z2", closesZone = 2, position = V(133.0f, 78.0f), yaw = 90.0f },
                 new CityLayout.Barrier { name = "Bar_West_Z4", closesZone = 4, position = V(52.0f, 83.0f), yaw = 0.0f },
                 new CityLayout.Barrier { name = "Bar_ParkW_Z4", closesZone = 4, position = V(93.0f, 83.0f), yaw = 0.0f },
-                new CityLayout.Barrier { name = "Bar_East_Z3", closesZone = 3, position = V(193.0f, 83.0f), yaw = 0.0f },
-                new CityLayout.Barrier { name = "Bar_117_Z4", closesZone = 4, position = V(153.0f, 117.0f), yaw = 90.0f },
-                new CityLayout.Barrier { name = "Bar_140_Z4", closesZone = 4, position = V(153.0f, 140.0f), yaw = 90.0f },
-                new CityLayout.Barrier { name = "Bar_Park_Z4", closesZone = 4, position = V(186.0f, 103.9f), yaw = 77.0f },
+                new CityLayout.Barrier { name = "Bar_East_Z3", closesZone = 3, otherZone = 2, position = V(193.0f, 83.0f), yaw = 0.0f },
+                // Zone 3 / Zone 4 border: these sell whichever side is still closed and stay until both are open.
+                new CityLayout.Barrier { name = "Bar_117_Z4", closesZone = 4, otherZone = 3, position = V(153.0f, 117.0f), yaw = 90.0f },
+                new CityLayout.Barrier { name = "Bar_140_Z4", closesZone = 4, otherZone = 3, position = V(153.0f, 140.0f), yaw = 90.0f },
+                new CityLayout.Barrier { name = "Bar_Park_Z4", closesZone = 4, otherZone = 3, position = V(186.0f, 103.9f), yaw = 77.0f },
             };
         }
     }

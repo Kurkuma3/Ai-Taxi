@@ -188,6 +188,7 @@ namespace Taxi.EditorTools
                 go.transform.SetPositionAndRotation(CityLayout.ToWorld(br.position), Quaternion.Euler(0f, br.yaw, 0f));
                 var zb = go.GetComponent<ZoneBarrier>();
                 zb.closesZone = br.closesZone;
+                zb.otherZone = br.otherZone;
                 zb.SetPrice(L.PriceOfZone(br.closesZone));
             }
 

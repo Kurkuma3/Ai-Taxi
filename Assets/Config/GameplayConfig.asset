@@ -73,5 +73,11 @@ MonoBehaviour:
   coinsPerPayment: 8
   coinFlightTime: 0.55
   coinStagger: 0.05
+  zonePrices: 00000000960000002c01000058020000i
+  barrierBuyRadius: 6
+  barrierBuyHalfWidth: 4.5
+  barrierBuyTime: 1
+  barrierBlinkRate: 5
+  barrierVanishTime: 0.45
   routeArrowRadius: 3.6
   routeArrowHideDistance: 9

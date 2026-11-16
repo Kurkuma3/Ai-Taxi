@@ -22,7 +22,12 @@ namespace Taxi
             [Tooltip("Tutorial mission N (1-based) picks up here; 0 = normal stop.")]
             public int tutorialMission;
         }
-        [Serializable] public class Barrier { public string name; public int closesZone; public Vector2 position; public float yaw; }
+        [Serializable] public class Barrier
+        {
+            public string name; public int closesZone; public Vector2 position; public float yaw;
+            [Tooltip("Zone on the near side; the barrier stays until both are open.")]
+            public int otherZone = 1;
+        }
         [Serializable] public class Zone { public int id; public string name; public int price; public Rect rect; }
 
         [Tooltip("Road width in metres. Pockets and barriers are sized from it.")]

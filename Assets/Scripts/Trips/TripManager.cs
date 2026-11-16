@@ -390,6 +390,26 @@ namespace Taxi
             }
         }
 
+        /// <summary>
+        /// True while the point is within stopRadius of the stop the current trip is about (pickup before the ride,
+        /// drop-off after). The barrier shop stays quiet there so a passenger stop never buys a zone by accident.
+        /// </summary>
+        public bool IsAtActiveStop(Vector3 p)
+        {
+            switch (Current)
+            {
+                case State.Waiting:
+                case State.Boarding:
+                    return Flat(p, PickupPos) <= config.stopRadius;
+                case State.Riding:
+                case State.Alighting:
+                case State.AwaitLuggage:
+                    return Flat(p, DropoffPos) <= config.stopRadius;
+                default:
+                    return false;
+            }
+        }
+
         /// <summary>Index of the stop marked for tutorial mission n, or -1 (then the trip is planned normally).</summary>
         int TutorialStop(int mission)
         {

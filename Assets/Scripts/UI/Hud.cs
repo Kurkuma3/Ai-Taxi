@@ -32,7 +32,7 @@ namespace Taxi
         static readonly Color reverseKnobColor = new Color(1f, 0.65f, 0.2f, 0.85f);
 
         // Payment animation state (no allocations per frame; the money string changes only when the shown value does).
-        struct Coin { public RectTransform rt; public Vector2 from, ctrl; public float start; public bool flying; }
+        struct Coin { public RectTransform rt; public Vector2 from, ctrl, to; public bool toCounter; public float start; public bool flying; }
         Coin[] coins;
         int shownMoney, countFrom, countTo;
         float countStart = -1f, punchUntil;
@@ -181,6 +181,8 @@ namespace Taxi
                 c.from = from + Random.insideUnitCircle * spread * 0.5f;
                 // Arc control point: out to the side first, then up into the counter.
                 c.ctrl = Vector2.Lerp(c.from, to, 0.3f) + new Vector2(Random.Range(-1f, 1f) * spread * 2f, -spread);
+                c.to = to;
+                c.toCounter = true;
                 c.start = now + i * config.coinStagger;
                 c.flying = true;
                 c.rt.position = c.from;
@@ -192,11 +194,46 @@ namespace Taxi
             countStart = now + config.coinFlightTime;   // the counter starts when the first coin lands
         }
 
+        /// <summary>Spending: the counter counts down at once and coins fly from it to the world point (a barrier).</summary>
+        public void PlaySpend(Vector3 toWorld, int newTotal)
+        {
+            if (coins == null) { SetMoney(newTotal); return; }
+            Vector3 sp = worldCamera.WorldToScreenPoint(toWorld);
+            Vector2 target = sp.z > 0f ? (Vector2)sp : new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
+            Vector2 from = moneyRoot.position;
+            float now = Time.unscaledTime;
+            float spread = 0.06f * Screen.height;
+            for (int i = 0; i < coins.Length; i++)
+            {
+                ref var c = ref coins[i];
+                c.from = from;
+                c.to = target + Random.insideUnitCircle * spread * 0.5f;
+                c.ctrl = Vector2.Lerp(from, target, 0.5f) + new Vector2(Random.Range(-1f, 1f) * spread * 2f, spread);
+                c.toCounter = false;
+                c.start = now + i * config.coinStagger;
+                c.flying = true;
+                c.rt.position = c.from;
+                c.rt.gameObject.SetActive(true);
+            }
+            coinIndexInBurst = 0;
+            countFrom = shownMoney;
+            countTo = newTotal;
+            countStart = now;
+            punchUntil = now + 0.12f;
+        }
+
+        /// <summary>One-shot UI sound (procedural clips from UiSprites).</summary>
+        public void PlaySfx(AudioClip clip, float pitch = 1f, float volume = 0.7f)
+        {
+            if (sfx == null || clip == null) return;
+            sfx.pitch = pitch;
+            sfx.PlayOneShot(clip, volume);
+        }
+
         void Update()
         {
             if (coins == null) return;
             float now = Time.unscaledTime;
-            Vector2 to = moneyRoot.position;
             for (int i = 0; i < coins.Length; i++)
             {
                 ref var c = ref coins[i];
@@ -207,6 +244,7 @@ namespace Taxi
                 {
                     c.flying = false;
                     c.rt.gameObject.SetActive(false);
+                    if (!c.toCounter) continue;   // spent coins just vanish at the barrier
                     punchUntil = now + 0.12f;
                     if (sfx != null && coinClip != null)
                     {
@@ -215,8 +253,8 @@ namespace Taxi
                     }
                     continue;
                 }
-                float e = t * t;   // ease-in: starts lazy, snaps into the counter
-                Vector2 a = Vector2.Lerp(c.from, c.ctrl, e), b = Vector2.Lerp(c.ctrl, to, e);
+                float e = t * t;   // ease-in: starts lazy, snaps into the target
+                Vector2 a = Vector2.Lerp(c.from, c.ctrl, e), b = Vector2.Lerp(c.ctrl, c.to, e);
                 c.rt.position = Vector2.Lerp(a, b, e);
                 c.rt.localScale = Vector3.one * Mathf.Lerp(1.2f, 0.7f, e);
             }
@@ -283,6 +321,31 @@ namespace Taxi
                 data[i] = env * (0.6f * Mathf.Sin(2f * Mathf.PI * 1760f * t) + 0.4f * Mathf.Sin(2f * Mathf.PI * 2637f * t));
             }
             var clip = AudioClip.Create("Coin", n, 1, rate, false);
+            clip.SetData(data, 0);
+            return clip;
+        }
+
+        /// <summary>Barrier "pop": a short noise burst over a falling-then-rising sine sweep, then a bright chime tail.</summary>
+        public static AudioClip PopClip()
+        {
+            const int rate = 44100;
+            const float len = 0.45f;
+            int n = (int)(rate * len);
+            var data = new float[n];
+            var rnd = new System.Random(7);
+            float phase = 0f, phase2 = 0f;
+            for (int i = 0; i < n; i++)
+            {
+                float t = (float)i / rate;
+                float f = t < 0.08f ? Mathf.Lerp(420f, 160f, t / 0.08f) : Mathf.Lerp(520f, 1046f, Mathf.Clamp01((t - 0.08f) / 0.12f));
+                phase += 2f * Mathf.PI * f / rate;
+                phase2 += 2f * Mathf.PI * 1568f / rate;
+                float noise = (float)(rnd.NextDouble() * 2.0 - 1.0) * Mathf.Exp(-t * 60f) * 0.5f;
+                float body = Mathf.Sin(phase) * Mathf.Exp(-t * 9f) * 0.6f;
+                float chime = t > 0.1f ? Mathf.Sin(phase2) * Mathf.Exp(-(t - 0.1f) * 10f) * 0.35f : 0f;
+                data[i] = (noise + body + chime) * Mathf.Clamp01(t * 600f);
+            }
+            var clip = AudioClip.Create("Pop", n, 1, rate, false);
             clip.SetData(data, 0);
             return clip;
         }

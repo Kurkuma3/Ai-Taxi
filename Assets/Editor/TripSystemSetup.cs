@@ -124,8 +124,59 @@ namespace Taxi.EditorTools
             Set(trips, "suitcasePrefab", suitcase);
             EditorUtility.SetDirty(trips);
 
+            // ---- Barrier shop ----
+            var shop = GetOrAdd<BarrierShop>(systems);
+            Set(shop, "config", cfg);
+            Set(shop, "car", car);
+            Set(shop, "playerState", fsm);
+            Set(shop, "zones", zones);
+            Set(shop, "wallet", wallet);
+            Set(shop, "hud", hud);
+            Set(shop, "trips", trips);
+            AssignBarrierZones(systems.scene);
+
             EditorSceneManager.MarkSceneDirty(systems.scene);
             Debug.Log("[Taxi] Trip system set up in " + systems.scene.path);
+        }
+
+        /// <summary>
+        /// Each barrier's two zones from its position: sample 6 m ahead (+Z) and behind it in the CityLayout zone
+        /// rectangles (the park counts as Zone 4). closesZone = the higher zone, otherZone = the lower one,
+        /// forwardZone = the one on +Z. Works for hand-placed copies whose names say nothing.
+        /// </summary>
+        static void AssignBarrierZones(UnityEngine.SceneManagement.Scene scene)
+        {
+            var layout = AssetDatabase.LoadAssetAtPath<CityLayout>("Assets/Config/CityLayout.asset");
+            if (layout == null) { Debug.LogWarning("[Taxi] CityLayout.asset missing: barrier zones not assigned"); return; }
+            foreach (var root in scene.GetRootGameObjects())
+                foreach (var b in root.GetComponentsInChildren<ZoneBarrier>(true))
+                {
+                    var t = b.transform;
+                    int zf = ZoneAt(layout, t.position + t.forward * 6f), zb = ZoneAt(layout, t.position - t.forward * 6f);
+                    if (zf == 0 || zb == 0 || zf == zb) { Debug.LogWarning($"[Taxi] {b.name}: zones around it unclear ({zf}/{zb}), kept as is", b); continue; }
+                    b.closesZone = Mathf.Max(zf, zb);
+                    b.otherZone = Mathf.Min(zf, zb);
+                    b.forwardZone = zf;
+                    EditorUtility.SetDirty(b);
+                    PrefabUtility.RecordPrefabInstancePropertyModifications(b);
+                }
+        }
+
+        static int ZoneAt(CityLayout layout, Vector3 p)
+        {
+            var v = new Vector2(p.x, p.z);
+            if (layout.park.Contains(v)) return 4;
+            if (layout.zones != null)
+                foreach (var z in layout.zones) if (z.rect.Contains(v)) return z.id;
+            return 0;
+        }
+
+        [MenuItem("Taxi/Reset Save (open zones)")]
+        public static void ResetSave()
+        {
+            PlayerPrefs.DeleteKey(ZoneProgress.SaveKey);
+            PlayerPrefs.Save();
+            Debug.Log("[Taxi] Save reset: only Zone 1 is open on the next Play");
         }
 
         [MenuItem("Taxi/Validate Passenger Stops")]

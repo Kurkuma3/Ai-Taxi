@@ -134,7 +134,16 @@ Verify: run **Taxi > Setup Passengers**, console clean; drag a passenger prefab 
 
 Files: `Assets/Scripts/Trips/` (`TripPlanner`, `TripManager`, `ZoneProgress`, `Wallet`, `Passenger`, `RouteHint`), additions to `Hud` and `PassengerStop`, editor `Assets/Editor/TripSystemSetup.cs`. All numbers are in `GameplayConfig` (headers Fares, Trip length, Passenger, Payment, Route hint).
 
-**Zones.** `ZoneProgress` keeps which zones are open (Zone 1 from the start) and `HighestOpen`. `Open(z)` makes z the *new zone* for the next `newZonePriorityTrips` (4) planned trips. Buying zones at barriers is the next task. For now, in the editor only, keys **1–4** open a zone and hide its barriers. A debug shortcut: the Z3/Z4 barrier rule is not applied there.
+**Zones.** `ZoneProgress` keeps which zones are open (Zone 1 from the start) and `HighestOpen`. `Open(z)` makes z the *new zone* for the next `newZonePriorityTrips` (4) planned trips. Open zones are saved (PlayerPrefs bitmask `Taxi.OpenZones`) and restored on launch without the new-zone priority. Menu **Taxi > Reset Save (open zones)** clears it. Money and the tutorial counter are not saved. In the editor only (`#if UNITY_EDITOR`, absent from builds), keys **1–4** open a zone.
+
+**Buying zones** (`BarrierShop`, config header Zones for sale).
+- Each `ZoneBarrier` sits between two zones: `closesZone` (higher), `otherZone` (lower) and `forwardZone` (the one on its +Z side). **Taxi > Setup Trip System** assigns them from the CityLayout zone rectangles 6 m ahead of and behind the barrier, with the park counting as Zone 4. This also fixed the hand-placed copy `Bar_West_Z4 (1)` at (181, 83), which is a Zone 2 / park (Zone 4) barrier, not Zone 1 / Zone 4.
+- A barrier sells whichever of its zones is still closed and disappears only when both are open. So buying Zone 4 from the west never opens Zone 3 for free.
+- Buy area: a rectangle in front of the barrier, |x| ≤ `barrierBuyHalfWidth` (4.5 m) across the road and |z| ≤ `barrierBuyRadius` (6 m) along it, on the open side. The car must be stopped there with the driver inside.
+- Enough money: the action ring fills over `barrierBuyTime` (1 s). Then `Wallet.TrySpend` runs, coins fly from the counter to the barrier while the counter counts down (`Hud.PlaySpend`), and `ZoneProgress.Open` saves the zone. Every barrier whose two zones are now open loses its colliders at once and pops out (grows 20%, shrinks to 0 over `barrierVanishTime`) with a procedural pop/chime (`UiSprites.PopClip`). Remaining barriers update their price to the zone they now sell.
+- Not enough money: an empty ring shows and the price text blinks red (`barrierBlinkRate`).
+- Prices come from `zonePrices` ($0 / 150 / 300 / 600) and are written to the signs at start.
+- Passenger stops win: the shop is silent while the car is within `stopRadius` of the current trip's stop (`TripManager.IsAtActiveStop`). Stop_06, 17, 18 and 29 lie next to barriers (checked with a 1 m grid over each stop radius against each buy area), and without this rule a pickup there could buy a zone.
 
 **Stop zones.** `PassengerStop.ResolvedZone` takes the zone from the `zone` field. If the field is 0, it uses the nearest parent named `Zone N` or `ZN`. Stops without a zone are ignored with a warning. Menu **Taxi > Validate Passenger Stops** counts the stops per zone (current scene: Z1 = 5, Z2 = 5, Z3 = 7, Z4 = 11 active, none missing). `Stop_25` and `Stop_27` are behind a road barrier with no way in: they are disabled (inactive GameObject, `CityLayout.Pocket.disabled = true`, CityBuilder builds them inactive). Inactive stops get no passengers and the curb is closed in front of them, because the curbs were rebuilt and inactive pockets are not drivable shapes. `Stop_28` was deleted from the scene, the layout asset and `CitySketchData`. Two Zone 1 stops were added on the start lot, which the sketch does not have: `Stop_Depot` (63, 38.5) in front of the taxi garage and `Stop_Parking` (63, 26) at the south end of the parking lot. Both are added to `CitySketchData`, `CityLayout.asset` and the scene. They lie fully inside the lot, so the curbs are unchanged, and they overlap no collider.
 
@@ -199,6 +208,7 @@ Known: `Stop_Depot` is 31–35 m from Stop_20 and Stop_23 (below the 40 m minimu
 
 ## Change log
 
+- 2026-11-16 — Zone purchase at barriers: stop in front, ring fills, pay, barrier pops with sound, zone saved; red blinking price when short of money; barriers know both zones (Z3/Z4 rule); config header Zones for sale; debug keys 1–4 editor-only; Taxi > Reset Save.
 - 2026-11-16 — Luggage: suitcase trips (tutorial mission 2 always, then 30%, +$5): load at pickup (suitcase → trunk on foot with action rings), unload at drop-off (trunk → drop point, then paid); no entering the car while carrying; config header Luggage; `Hud.RequestActionRing`.
 - 2026-11-16 — Tutorial: the first two trips start on the depot lot (mission 1 Stop_Parking, mission 2 Stop_Depot), `PassengerStop.tutorialMission`, config `tutorialTrips`.
 - 2026-11-16 — Stops: Stop_25 and Stop_27 disabled (unreachable behind a barrier), Stop_28 deleted; curbs rebuilt (376 colliders) so the closed pockets get a curb.
