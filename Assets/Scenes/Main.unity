@@ -19073,8 +19073,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Taxi.Runtime::Taxi.TopDownCamera
   target: {fileID: 258148712}
-  offset: {x: 0, y: 18, z: -8}
-  smoothing: 6
+  config: {fileID: 11400000, guid: 74d7e2b5b595a1549aca00f81d139ef4, type: 2}
+  car: {fileID: 1151517011}
 --- !u!81 &1239387620
 AudioListener:
   m_ObjectHideFlags: 0

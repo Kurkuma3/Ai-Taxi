@@ -68,7 +68,14 @@ Sprites are generated at runtime by `UiSprites.Ring`, so the prototype needs no 
 
 ## 6. Camera
 
-File: `Assets/Scripts/CameraRig/TopDownCamera.cs`. Fixed-angle follow camera with offset `(0, 18, −8)`, zero yaw (so screen-up = world +Z, which the car and player steering rely on), exponential smoothing. `Target` is swapped by the state machine.
+File: `Assets/Scripts/CameraRig/TopDownCamera.cs`, config header **Camera**. Zero yaw always (screen-up = world +Z, which the car and player steering rely on). `Target` is swapped by the state machine; the camera also holds `config` and `car` references (wired by SceneBootstrap).
+- **On foot:** close, `cameraFootOffset` (0, 18, −8), as before.
+- **In the car:** higher, `cameraCarOffset` (0, 30, −13.3): the same pitch, just farther, so on a phone you see where you are driving.
+- **Speed zoom:** `zoom` follows |speed| / `maxSpeed` with an exponential rate, faster out (`cameraZoomOutRate` 1.2/s) than back in (`cameraZoomInRate` 0.8/s). The car offset grows along its own direction until it is `cameraSpeedZoomHeight` (+8 m) higher at max speed.
+- **Look-ahead:** the follow point moves `cameraLookAhead` (9 m at max speed) along the car's forward × signed speed, so reversing looks behind. It is smoothed by `cameraLookAheadRate` (2/s) so turns swing gently.
+- **Transition:** a 0..1 blend between the foot and car offsets eases with `cameraModeBlendRate` (2.5/s) on getting in and out. The rotation is recomputed from the blended offset every frame, so a custom car offset with a different pitch also blends smoothly. Position follow: `cameraFollowSmoothing` (6/s).
+
+Verify: get in and drive at full speed. The view rises by about 8 m and shifts forward. Brake: it settles back down. Get out: it eases down to the close foot view. Play Mode was not run for this change.
 
 ## 7. Scene bootstrap and tests
 
@@ -222,6 +229,7 @@ Known: `Stop_Depot` is 31–35 m from Stop_20 and Stop_23 (below the 40 m minimu
 
 ## Change log
 
+- 2026-11-16 — Camera: separate foot and car offsets (car 30 m high), speed zoom (+8 m at max speed), look-ahead along the direction of travel, smooth blend on getting in/out; config header Camera (the old serialized offset/smoothing on the camera are gone).
 - 2026-11-16 — Orders refresh: the other orders vanish when a passenger boards, a fresh set pops in after the drop-off (config `offerSpawnStagger`); opening a zone re-plans waiting orders (same stop, new destination and fare, pill punch, config `offerPulseTime`); a luggage passenger gets in as soon as the suitcase is picked up, the trunk is loaded during the ride.
 - 2026-11-16 — Orders: 3 passengers wait at once after the tutorial, each with its own colour; edge-of-screen arrows with the price (suitcase icon for luggage), pill over the head when on screen, hidden during a ride; coloured ring on each waiting stop; passengers and suitcases pooled; planner `blockedPickups` (hard) / `blockedDropoffs` (soft); config header Orders.
 - 2026-11-16 — Fix: Zone 2 barriers were missing on Play because a debug key had saved Zone 2 as open. Debug opens (keys 1–4) are no longer saved; restored progress is logged at start; the local save was reset.

@@ -23,6 +23,26 @@ namespace Taxi
         [Range(0f, 1f)] public float collisionSpeedKeep = 0.3f;
         public float stoppedSpeedThreshold = 0.25f;
 
+        [Header("Camera")]
+        [Tooltip("Camera offset from the player on foot (yaw stays 0, the pitch follows the offset direction).")]
+        public Vector3 cameraFootOffset = new Vector3(0f, 18f, -8f);
+        [Tooltip("Camera offset from the car when stopped. Same pitch as on foot by default, just farther.")]
+        public Vector3 cameraCarOffset = new Vector3(0f, 30f, -13.3f);
+        [Tooltip("Extra camera height at the car's max speed (the camera backs off along the car offset direction).")]
+        public float cameraSpeedZoomHeight = 8f;
+        [Tooltip("How fast the camera zooms out while speeding up (exponential rate, 1/s).")]
+        public float cameraZoomOutRate = 1.2f;
+        [Tooltip("How fast the camera zooms back in while slowing down (exponential rate, 1/s).")]
+        public float cameraZoomInRate = 0.8f;
+        [Tooltip("At max speed the camera looks this many metres ahead along the direction of travel.")]
+        public float cameraLookAhead = 9f;
+        [Tooltip("Look-ahead smoothing (exponential rate, 1/s). Lower = lazier swing in turns.")]
+        public float cameraLookAheadRate = 2f;
+        [Tooltip("Position follow smoothing (exponential rate, 1/s).")]
+        public float cameraFollowSmoothing = 6f;
+        [Tooltip("Foot <-> car transition speed when getting in or out (exponential rate, 1/s).")]
+        public float cameraModeBlendRate = 2.5f;
+
         [Header("Car reverse (automatic: stick pointing behind the car)")]
         [Tooltip("Stick this many degrees or more away from the heading means 'back up', not 'turn around'.")]
         [Range(90f, 180f)] public float reverseEnterAngle = 120f;

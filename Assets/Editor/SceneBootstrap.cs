@@ -98,6 +98,8 @@ namespace Taxi.EditorTools
             cam.fieldOfView = 50f;
             var rig = cam.gameObject.AddComponent<TopDownCamera>();
             Set(rig, "target", player.transform);
+            Set(rig, "config", cfg);
+            Set(rig, "car", carCtrl);
             var light = Object.FindFirstObjectByType<Light>();
             if (light != null) light.transform.rotation = Quaternion.Euler(55f, -35f, 0f);
 

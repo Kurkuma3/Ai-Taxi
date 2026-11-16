@@ -22,6 +22,15 @@ MonoBehaviour:
   minTurnFactor: 0.5
   collisionSpeedKeep: 0.3
   stoppedSpeedThreshold: 0.25
+  cameraFootOffset: {x: 0, y: 18, z: -8}
+  cameraCarOffset: {x: 0, y: 30, z: -13.3}
+  cameraSpeedZoomHeight: 8
+  cameraZoomOutRate: 1.2
+  cameraZoomInRate: 0.8
+  cameraLookAhead: 9
+  cameraLookAheadRate: 2
+  cameraFollowSmoothing: 6
+  cameraModeBlendRate: 2.5
   reverseEnterAngle: 120
   reverseExitAngle: 80
   reverseEnterSpeed: 1.5
