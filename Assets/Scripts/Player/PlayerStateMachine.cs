@@ -19,6 +19,8 @@ namespace Taxi
         [SerializeField] Hud hud;
 
         public State Current { get; private set; }
+        /// <summary>Set by other systems (carrying a suitcase): the enter ring does not fill while true.</summary>
+        public bool EnterBlocked { get; set; }
 
         float holdProgress; // 0..1, shared by the enter ring and the exit ring
         float timer;
@@ -52,10 +54,11 @@ namespace Taxi
                         canEnter = true;
                         Decay(ref holdProgress, dt);
                     }
-                    else if (canEnter && car.IsStopped)
+                    else if (canEnter && car.IsStopped && !EnterBlocked)
                     {
                         holdProgress += dt / config.enterHoldTime;
                     }
+                    else Decay(ref holdProgress, dt);
                     hud.ShowHoldRing(holdProgress, ringPos);
                     hud.ShowStick(input.StickActive, input.StickOrigin, input.StickPos, input.StickRadiusPx);
                     if (holdProgress >= 1f) Enter(State.Entering);

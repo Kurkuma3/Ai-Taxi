@@ -85,6 +85,21 @@ namespace Taxi
         [Tooltip("The first N trips pick up at the stop marked with PassengerStop.tutorialMission = 1..N (the taxi depot lot).")]
         public int tutorialTrips = 2;
 
+        [Header("Luggage")]
+        [Tooltip("Share of trips with a suitcase after the tutorial (tutorial mission 2 always has one, mission 1 never).")]
+        [Range(0f, 1f)] public float luggageTripChance = 0.3f;
+        [Tooltip("Added to the fare of a trip with a suitcase.")]
+        public int luggageBonus = 5;
+        [Tooltip("Stand within this distance of the suitcase / trunk / drop point to fill the ring.")]
+        public float luggageInteractRadius = 1.6f;
+        public float luggageHoldTime = 0.6f;
+        [Tooltip("Trunk point: this far behind the car centre.")]
+        public float trunkOffset = 2.7f;
+        [Tooltip("Where the suitcase hangs relative to the player while carried (right hand side).")]
+        public Vector3 carryLocalOffset = new Vector3(0.42f, 0.14f, 0.05f);
+        [Tooltip("At the drop-off the suitcase goes to a point this far from the passenger, toward the car.")]
+        public float luggageDropDistance = 1.2f;
+
         [Header("Passenger")]
         [Tooltip("The car must stop with its centre within this distance of the stop marker to pick up / drop off.")]
         public float stopRadius = 7f;

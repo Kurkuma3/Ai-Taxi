@@ -7171,6 +7171,7 @@ MonoBehaviour:
   passengerPrefabs:
   - {fileID: 7011545879107037990, guid: 82721d1efb7c18c488ac67d0e91f6d7b, type: 3}
   - {fileID: 8254787359235996368, guid: fdbd3ea7ba6461c469ea6a5f01ccd784, type: 3}
+  suitcasePrefab: {fileID: 8358767050179360612, guid: 0420b307b4e469e45a82a72e641e4cb7, type: 3}
 --- !u!114 &460561910
 MonoBehaviour:
   m_ObjectHideFlags: 0

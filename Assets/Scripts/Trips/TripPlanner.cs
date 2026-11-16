@@ -10,14 +10,18 @@ namespace Taxi
         public readonly int pickup, dropoff;   // indices into the stop list the planner was given
         public readonly int fromZone, toZone;
         public readonly float distance;        // straight line, metres
-        public readonly int fare;              // dollars, zone multiplier included
+        public readonly int fare;              // dollars, zone multiplier and luggage bonus included
+        public readonly bool luggage;          // passenger has a suitcase: load it at pickup, carry it out at drop-off
 
-        public Trip(int pickup, int dropoff, int fromZone, int toZone, float distance, int fare)
+        public Trip(int pickup, int dropoff, int fromZone, int toZone, float distance, int fare, bool luggage = false)
         {
             this.pickup = pickup; this.dropoff = dropoff;
             this.fromZone = fromZone; this.toZone = toZone;
-            this.distance = distance; this.fare = fare;
+            this.distance = distance; this.fare = fare; this.luggage = luggage;
         }
+
+        /// <summary>Same trip with a suitcase; the bonus is added to the fare shown above the passenger.</summary>
+        public Trip WithLuggage(int bonus) => new Trip(pickup, dropoff, fromZone, toZone, distance, fare + bonus, true);
     }
 
     /// <summary>Planner input for one stop: ground position (X, Z) and zone (0 = unknown, never used).</summary>

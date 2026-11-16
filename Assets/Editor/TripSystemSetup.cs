@@ -119,6 +119,9 @@ namespace Taxi.EditorTools
             if (prefabs[0] == null || prefabs[1] == null) throw new System.Exception("[Taxi] Passenger prefabs missing: run Taxi > Setup Passengers");
             var f = typeof(TripManager).GetField("passengerPrefabs", BindingFlags.Instance | BindingFlags.NonPublic);
             f.SetValue(trips, prefabs);
+            var suitcase = AssetDatabase.LoadAssetAtPath<GameObject>(PassengerAssets.PrefabSuitcase);
+            if (suitcase == null) throw new System.Exception("[Taxi] Suitcase prefab missing: run Taxi > Setup Passengers");
+            Set(trips, "suitcasePrefab", suitcase);
             EditorUtility.SetDirty(trips);
 
             EditorSceneManager.MarkSceneDirty(systems.scene);

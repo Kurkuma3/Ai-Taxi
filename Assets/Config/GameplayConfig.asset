@@ -55,6 +55,13 @@ MonoBehaviour:
   newZoneTripChance: 0.5
   newZonePriorityTrips: 4
   tutorialTrips: 2
+  luggageTripChance: 0.3
+  luggageBonus: 5
+  luggageInteractRadius: 1.6
+  luggageHoldTime: 0.6
+  trunkOffset: 2.7
+  carryLocalOffset: {x: 0.42, y: 0.14, z: 0.05}
+  luggageDropDistance: 1.2
   stopRadius: 7
   waveDistance: 30
   passengerWalkSpeed: 2.5

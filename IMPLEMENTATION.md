@@ -175,6 +175,14 @@ With the new-zone priority on (measured before the depot/parking stops), 91% of 
 
 No state waits for something the player cannot do.
 
+**Luggage** (`TripManager`, config header Luggage). Tutorial mission 2 always has a suitcase and mission 1 never does. After the tutorial a trip has one with `luggageTripChance` (0.3), which adds `luggageBonus` ($5) to the fare (the overhead label includes it). Suitcase state: `None → AtStop → Carried → InTrunk → Carried → Delivered`.
+- Pickup: the suitcase stands at the passenger's right. Stop at the pocket and get out (normal hold on the car). Stand by the suitcase until the action ring fills (`luggageInteractRadius` 1.6 m, `luggageHoldTime` 0.6 s), and it is carried at the right hand (`carryLocalOffset`, parented to the player root). Then fill the ring at the trunk (`trunkOffset` 2.7 m behind the car centre) and get back in. The passenger boards only once the suitcase is in the trunk and the car is stopped at the stop with the driver inside.
+- Drop-off: the passenger gets out and waits at the stop (state `AwaitLuggage`, not paid yet). Fill the ring at the trunk, carry the suitcase to the drop point (`luggageDropDistance` 1.2 m from the passenger toward the car), fill the ring there → it is put down and the payment plays from it.
+- While the suitcase is carried, `PlayerStateMachine.EnterBlocked` is set and the enter ring does not fill. Driving off at the pickup leaves the suitcase at the stop. Driving off at the drop-off keeps it in the trunk; the passenger keeps waiting and the hint leads back.
+- The route hint follows the current target (suitcase, trunk, drop point; the stop while far away in the car).
+- The action ring is a second HUD ring, `Hud.RequestActionRing`: an empty ring appears within 3× the radius, fills inside it and drains outside. It is requested per frame and hidden in `LateUpdate` when nobody asked, so the barrier shop can share it.
+- Side change: the enter ring now also drains while the player is next to a moving car or blocked (before, it froze).
+
 **Payment.** `Wallet.Add` raises `Earned`. `Hud.PlayPayment` flies `coinsPerPayment` pooled coin images from the passenger to the top counter along small arcs (staggered). Each landing plays a procedural "ding" (two sines, pitch rising per coin) and punches the counter scale. The counter counts up over `moneyCountUpTime`, starting when the first coin lands. The money string is rebuilt only when the shown value changes.
 
 **Route hint.** `RouteHint` builds an arrow, a ring and a beam mesh in Awake. They use one URP Unlit material (`Assets/Art/Materials/RouteHint.mat`), tinted through a MaterialPropertyBlock: green for pickup, amber for drop-off. The arrow circles the car (or the player on foot) at `routeArrowRadius` and points straight at the target. It hides closer than `routeArrowHideDistance`. The ring pulses on the target stop.
@@ -191,6 +199,7 @@ Known: `Stop_Depot` is 31–35 m from Stop_20 and Stop_23 (below the 40 m minimu
 
 ## Change log
 
+- 2026-11-16 — Luggage: suitcase trips (tutorial mission 2 always, then 30%, +$5): load at pickup (suitcase → trunk on foot with action rings), unload at drop-off (trunk → drop point, then paid); no entering the car while carrying; config header Luggage; `Hud.RequestActionRing`.
 - 2026-11-16 — Tutorial: the first two trips start on the depot lot (mission 1 Stop_Parking, mission 2 Stop_Depot), `PassengerStop.tutorialMission`, config `tutorialTrips`.
 - 2026-11-16 — Stops: Stop_25 and Stop_27 disabled (unreachable behind a barrier), Stop_28 deleted; curbs rebuilt (376 colliders) so the closed pockets get a curb.
 - 2026-11-16 — Zone 1 variety: `Stop_Depot` and `Stop_Parking` on the start lot; routes are not repeated (last 2, either direction, beats the distance range; config `recentRoutesToAvoid`); wallet starts with $50 (config `startMoney`).

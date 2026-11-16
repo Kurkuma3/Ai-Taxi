@@ -40,6 +40,14 @@ namespace Taxi
         AudioClip coinClip;
         int coinIndexInBurst;
 
+        // Action ring (suitcase, trunk, barrier): a second ring cloned from the hold ring. Systems request it every
+        // frame they need it; LateUpdate hides it when nobody asked, so two systems never fight over it.
+        Image actionBg, actionFill;
+        bool actionRequested;
+        float actionProgress;
+        Vector3 actionWorldPos;
+        static readonly Color actionFillColor = new Color(0.35f, 0.95f, 0.5f, 1f);
+
         void Awake()
         {
             SetupTripUi();
@@ -50,6 +58,13 @@ namespace Taxi
             var disc = UiSprites.Ring(128, 0f);
             enterRingBackground.sprite = ring;
             enterRingFill.sprite = ring;
+            actionBg = Instantiate(enterRingBackground, enterRingBackground.transform.parent);
+            actionBg.name = "ActionRingBg";
+            actionFill = Instantiate(enterRingFill, enterRingFill.transform.parent);
+            actionFill.name = "ActionRingFill";
+            actionFill.color = actionFillColor;
+            actionBg.gameObject.SetActive(false);
+            actionFill.gameObject.SetActive(false);
             stickBase.sprite = UiSprites.Ring(128, 0.9f);
             stickKnob.sprite = disc;
 
@@ -110,6 +125,37 @@ namespace Taxi
         public void HideFare()
         {
             if (fareLabel != null && fareLabel.gameObject.activeSelf) fareLabel.gameObject.SetActive(false);
+        }
+
+        /// <summary>
+        /// Shows the action ring this frame above a world point (empty ring = "stand here", fills with progress 0..1).
+        /// Call every frame while needed; the last caller in a frame wins.
+        /// </summary>
+        public void RequestActionRing(float progress, Vector3 worldPos)
+        {
+            actionRequested = true;
+            actionProgress = progress;
+            actionWorldPos = worldPos;
+        }
+
+        void LateUpdate()
+        {
+            bool on = actionRequested && actionBg != null;
+            actionRequested = false;
+            if (on)
+            {
+                Vector3 sp = worldCamera.WorldToScreenPoint(actionWorldPos);
+                on = sp.z > 0f;
+                sp.z = 0f;
+                actionBg.rectTransform.position = sp;
+                actionFill.rectTransform.position = sp;
+                actionFill.fillAmount = Mathf.Clamp01(actionProgress);
+            }
+            if (actionBg != null && actionBg.gameObject.activeSelf != on)
+            {
+                actionBg.gameObject.SetActive(on);
+                actionFill.gameObject.SetActive(on);
+            }
         }
 
         /// <summary>Shows a value at once, no animation (game start, spending).</summary>
