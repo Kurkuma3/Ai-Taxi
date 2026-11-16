@@ -143,6 +143,7 @@ namespace Taxi
             string title = Index == 0 ? "Intro" : Def.title;
             if (Index >= 1) TotalSeconds += now - startTime;
             Completed?.Invoke(Index, title, startTime, now, attempts);
+            if (Index >= 1) hud.ShowObjectiveDone(title);   // short popup in the objective line
             int next = Index + 1;
             PlayerPrefs.SetInt(SaveKey, next);
             PlayerPrefs.SetFloat(TotalKey, TotalSeconds);
@@ -156,11 +157,11 @@ namespace Taxi
             dirty = false;
             if (Index == 0)
             {
-                hud.SetObjective("Drag to walk to your taxi, stand next to it");
+                hud.SetObjective("Drag to walk to your taxi, stand next to it", 0);
                 return;
             }
             var d = Def;
-            if (d == null) { hud.SetObjective("All objectives done! Free ride"); return; }
+            if (d == null) { hud.SetObjective("All objectives done! Free ride", Count); return; }
 
             bool pre = PreconditionMet(d);
             lastPrecondition = pre;
@@ -178,7 +179,7 @@ namespace Taxi
                     line += " · " + sec / 60 + ":" + (sec % 60).ToString("00");
                 }
             }
-            hud.SetObjective(line);
+            hud.SetObjective(line, Index);
         }
     }
 }

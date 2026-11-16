@@ -45,6 +45,8 @@ namespace Taxi
         struct OrderMarker
         {
             public RectTransform pill, arrow, icon;
+            public CanvasGroup group;      // pill + arrow alpha: semi-transparent while pinned to the edge
+            public CanvasGroup arrowGroup;
             public Image bg, arrowImg;
             public Text text;
             public int fareShown;
@@ -115,6 +117,12 @@ namespace Taxi
         {
             if (config == null || moneyText == null) return;   // scene not set up for trips yet
             moneyText.text = "$0";
+            // Money: top-right corner, right-aligned, compact (scaled up only while counting, see Update).
+            moneyRoot.anchorMin = moneyRoot.anchorMax = new Vector2(1f, 1f);
+            moneyRoot.pivot = new Vector2(1f, 1f);
+            moneyRoot.anchoredPosition = new Vector2(-28f, -28f);
+            moneyText.alignment = TextAnchor.UpperRight;
+            moneyRoot.localScale = Vector3.one * config.moneyCompactScale;
             if (fareLabel != null) fareLabel.gameObject.SetActive(false);
             BuildOrderMarkers();
             BuildBanners();
@@ -133,16 +141,25 @@ namespace Taxi
 
         // ---- Objective line (under the money counter) and the ride-rating toast --------------------------------
 
-        RectTransform objectiveRoot, toastRoot;
-        Text objectiveText, toastText;
-        string objectiveShown;
-        float toastUntil = -1f;
+        RectTransform objectiveRoot, toastRoot, objectiveIcon;
+        Text objectiveText, toastText, objectiveIconText;
+        string objectiveShown, doneText, iconShown;
+        int objectiveNumber;
+        float toastUntil = -1f, expandedUntil = -1f, doneUntil = -1f;
 
         void BuildBanners()
         {
             if (fareLabel == null) return;
-            objectiveRoot = Banner("ObjectiveLine", new Vector2(0.5f, 1f), new Vector2(0f, -205f), new Vector2(960f, 84f),
-                new Color(0.1f, 0.1f, 0.12f, 0.75f), 46, Color.white, out objectiveText);
+            // Below the compact money counter (top-right), so the two never overlap.
+            objectiveRoot = Banner("ObjectiveLine", new Vector2(0.5f, 1f), new Vector2(0f, -120f), new Vector2(900f, 80f),
+                new Color(0.1f, 0.1f, 0.12f, 0.75f), 44, Color.white, out objectiveText);
+            // Collapsed form: a small tappable chip with the objective number, top-left (under the DBG button).
+            objectiveIcon = Banner("ObjectiveIcon", new Vector2(0f, 1f), new Vector2(84f, -120f), new Vector2(110f, 80f),
+                new Color(0.1f, 0.1f, 0.12f, 0.75f), 44, new Color(1f, 0.86f, 0.25f), out objectiveIconText);
+            var iconImg = objectiveIcon.GetComponent<Image>();
+            iconImg.raycastTarget = true;
+            objectiveIcon.gameObject.AddComponent<Button>().onClick.AddListener(ExpandObjective);
+            objectiveIcon.gameObject.SetActive(false);
             toastRoot = Banner("RideToast", new Vector2(0.5f, 0.5f), new Vector2(0f, 420f), new Vector2(760f, 96f),
                 new Color(0.1f, 0.1f, 0.12f, 0.8f), 52, new Color(1f, 0.86f, 0.25f), out toastText);
             objectiveRoot.gameObject.SetActive(false);
@@ -287,13 +304,51 @@ namespace Taxi
             return rt;
         }
 
-        /// <summary>Top line ("Long haul · 1/3"). Null or empty hides it. Rebuilds the text only when it changes.</summary>
-        public void SetObjective(string line)
+        /// <summary>
+        /// Top line ("Long haul · 1/3"). Shown for objectiveShowTime whenever the text changes (new objective, progress),
+        /// then collapsed to a small chip with the number; tapping the chip shows it again. Null or empty hides both.
+        /// </summary>
+        public void SetObjective(string line, int number = 0)
         {
             if (objectiveRoot == null) return;
-            bool on = !string.IsNullOrEmpty(line);
-            if (objectiveRoot.gameObject.activeSelf != on) objectiveRoot.gameObject.SetActive(on);
-            if (on && line != objectiveShown) { objectiveShown = line; objectiveText.text = line; }
+            objectiveNumber = number;
+            if (line == objectiveShown) return;
+            objectiveShown = line;
+            if (!string.IsNullOrEmpty(line))
+                expandedUntil = Mathf.Max(expandedUntil, Mathf.Max(Time.unscaledTime, doneUntil) + config.objectiveShowTime);
+        }
+
+        /// <summary>Completion popup: "✓ Long haul" in the objective line for objectiveDoneTime, then the next objective.</summary>
+        public void ShowObjectiveDone(string title)
+        {
+            if (objectiveRoot == null) return;
+            doneText = "✓ " + title;
+            doneUntil = Time.unscaledTime + config.objectiveDoneTime;
+            expandedUntil = doneUntil + config.objectiveShowTime;
+        }
+
+        void ExpandObjective() => expandedUntil = Time.unscaledTime + config.objectiveShowTime;
+
+        void UpdateObjectiveLine()
+        {
+            if (objectiveRoot == null) return;
+            float now = Time.unscaledTime;
+            bool done = now < doneUntil;
+            bool hasLine = done || !string.IsNullOrEmpty(objectiveShown);
+            bool expanded = hasLine && now < expandedUntil;
+            if (objectiveRoot.gameObject.activeSelf != expanded) objectiveRoot.gameObject.SetActive(expanded);
+            bool icon = hasLine && !expanded;
+            if (objectiveIcon.gameObject.activeSelf != icon) objectiveIcon.gameObject.SetActive(icon);
+            if (expanded)
+            {
+                string t = done ? doneText : objectiveShown;
+                if (objectiveText.text != t) objectiveText.text = t;
+            }
+            if (icon)
+            {
+                string s = objectiveNumber > 0 ? objectiveNumber.ToString() : "?";
+                if (s != iconShown) { iconShown = s; objectiveIconText.text = s; }
+            }
         }
 
         /// <summary>Short message in the upper middle of the screen (ride rating), hidden after 'seconds'.</summary>
@@ -349,6 +404,10 @@ namespace Taxi
                 m.fareShown = -1;
                 m.luggage = true;   // forces SetLuggage below to lay the pill out
                 SetLuggage(ref m, false);
+                m.group = go.AddComponent<CanvasGroup>();
+                m.group.interactable = m.group.blocksRaycasts = false;
+                m.arrowGroup = arrow.AddComponent<CanvasGroup>();
+                m.arrowGroup.interactable = m.arrowGroup.blocksRaycasts = false;
                 go.SetActive(false);
                 arrow.SetActive(false);
             }
@@ -410,6 +469,8 @@ namespace Taxi
                 Vector3 sp = worldCamera.WorldToScreenPoint(m.head);
                 bool inView = sp.z > 0f && sp.x >= 0f && sp.x <= w && sp.y >= 0f && sp.y <= h;
                 if (m.arrow.gameObject.activeSelf == inView) m.arrow.gameObject.SetActive(!inView);
+                float alpha = inView ? 1f : config.offerEdgeAlpha;   // edge markers stay in the background
+                if (m.group.alpha != alpha) { m.group.alpha = alpha; m.arrowGroup.alpha = alpha; }
                 if (inView)
                 {
                     m.pill.position = new Vector3(sp.x, sp.y + size.y * 0.5f, 0f);
@@ -564,6 +625,7 @@ namespace Taxi
                 toastRoot.gameObject.SetActive(false);
             }
             UpdatePayLabel();
+            UpdateObjectiveLine();
             if (coins == null) return;
             float now = Time.unscaledTime;
             for (int i = 0; i < coins.Length; i++)
@@ -598,7 +660,10 @@ namespace Taxi
                 if (v != shownMoney) { shownMoney = v; moneyText.text = "$" + v; }
                 if (k >= 1f) countStart = -1f;
             }
-            moneyRoot.localScale = Vector3.one * (now < punchUntil ? 1.18f : Mathf.MoveTowards(moneyRoot.localScale.x, 1f, Time.unscaledDeltaTime * 3f));
+            // Compact in the corner; full size only while counting (and a punch when a coin lands).
+            bool counting = countStart >= 0f || now < punchUntil + 0.4f;
+            float rest = counting ? 1f : config.moneyCompactScale;
+            moneyRoot.localScale = Vector3.one * (now < punchUntil ? 1.18f : Mathf.MoveTowards(moneyRoot.localScale.x, rest, Time.unscaledDeltaTime * 3f));
         }
 
         public void ShowStick(bool active, Vector2 origin, Vector2 knob, float radiusPx, bool reversing = false)

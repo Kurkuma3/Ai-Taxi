@@ -227,6 +227,17 @@ namespace Taxi
         [Tooltip("Edge arrows stay above this fraction of the screen height from the bottom (the thumb / stick area).")]
         [Range(0f, 0.5f)] public float offerEdgeBottom = 0.3f;
 
+        [Tooltip("Opacity of order markers while pinned to the screen edge (passenger off screen).")]
+        [Range(0.2f, 1f)] public float offerEdgeAlpha = 0.65f;
+
+        [Header("Screen UI")]
+        [Tooltip("The objective line shows this long after it changes (new objective, progress), then collapses to a chip.")]
+        public float objectiveShowTime = 4f;
+        [Tooltip("\"✓ Objective\" completion popup length, seconds (in the objective line, never in the centre).")]
+        public float objectiveDoneTime = 1.5f;
+        [Tooltip("Money counter scale at rest (top-right corner); it grows to full size while counting.")]
+        [Range(0.3f, 1f)] public float moneyCompactScale = 0.6f;
+
         [Header("Payment")]
         [Tooltip("Money in the wallet when the game starts.")]
         public int startMoney = 50;

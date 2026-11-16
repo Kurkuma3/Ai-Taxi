@@ -121,6 +121,10 @@ MonoBehaviour:
   offerEdgeMargin: 80
   offerEdgeTop: 0.17
   offerEdgeBottom: 0.3
+  offerEdgeAlpha: 0.65
+  objectiveShowTime: 4
+  objectiveDoneTime: 1.5
+  moneyCompactScale: 0.6
   startMoney: 50
   moneyCountUpTime: 0.8
   coinsPerPayment: 8
@@ -216,6 +220,6 @@ MonoBehaviour:
     timeLimit: 90
   bumpMinImpactSpeed: 3
   starsLostPerBump: 1
-  rideToastTime: 2.5
+  rideToastTime: 1.5
   routeArrowRadius: 3.6
   routeArrowHideDistance: 9
