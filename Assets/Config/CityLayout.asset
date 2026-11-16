@@ -394,126 +394,152 @@ MonoBehaviour:
     zone: 4
     position: {x: 104.1, y: 163.5}
     yaw: 90
+    disabled: 0
   - name: Stop_02
     zone: 4
     position: {x: 124.5, y: 163.7}
     yaw: 180
+    disabled: 0
   - name: Stop_03
     zone: 4
     position: {x: 84.5, y: 151.8}
     yaw: 0
+    disabled: 0
   - name: Stop_04
     zone: 4
     position: {x: 52, y: 154.5}
     yaw: 90
+    disabled: 0
   - name: Stop_05
     zone: 4
     position: {x: 111.5, y: 147.9}
     yaw: 180
+    disabled: 0
   - name: Stop_06
     zone: 4
     position: {x: 149.3, y: 146.5}
     yaw: 90
+    disabled: 0
   - name: Stop_07
     zone: 4
     position: {x: 125.4, y: 133.5}
     yaw: 90
+    disabled: 0
   - name: Stop_08
     zone: 4
     position: {x: 97.5, y: 132.7}
     yaw: 0
+    disabled: 0
   - name: Stop_09
     zone: 3
     position: {x: 182.7, y: 123.5}
     yaw: 90
+    disabled: 0
   - name: Stop_10
     zone: 4
     position: {x: 123.2, y: 123.5}
     yaw: 90
+    disabled: 0
   - name: Stop_11
     zone: 3
     position: {x: 258, y: 118.5}
     yaw: 90
+    disabled: 0
   - name: Stop_12
     zone: 3
     position: {x: 172.1, y: 123.5}
     yaw: 90
+    disabled: 0
   - name: Stop_13
     zone: 4
     position: {x: 70.2, y: 110.5}
     yaw: 90
+    disabled: 0
   - name: Stop_14
     zone: 3
     position: {x: 232.4, y: 115.5}
     yaw: 90
+    disabled: 0
   - name: Stop_15
     zone: 3
     position: {x: 232.1, y: 102.5}
     yaw: 90
+    disabled: 0
   - name: Stop_16
     zone: 4
     position: {x: 86.5, y: 102}
     yaw: 0
+    disabled: 0
   - name: Stop_17
     zone: 3
     position: {x: 186.5, y: 97.3}
     yaw: 0
+    disabled: 0
   - name: Stop_18
     zone: 3
     position: {x: 186.5, y: 90.5}
     yaw: 0
+    disabled: 0
   - name: Stop_19
     zone: 2
     position: {x: 161.2, y: 71.5}
     yaw: 90
+    disabled: 0
   - name: Stop_20
     zone: 1
     position: {x: 69.5, y: 70.4}
     yaw: 180
+    disabled: 0
   - name: Stop_21
     zone: 2
     position: {x: 186.5, y: 68.9}
     yaw: 0
+    disabled: 0
   - name: Stop_22
     zone: 2
     position: {x: 186.5, y: 58}
     yaw: 0
+    disabled: 0
   - name: Stop_23
     zone: 1
     position: {x: 94.8, y: 53.2}
     yaw: 117.4
+    disabled: 0
   - name: Stop_24
     zone: 2
     position: {x: 139.8, y: 32.2}
     yaw: 130.9
+    disabled: 0
   - name: Stop_25
     zone: 2
     position: {x: 160.4, y: 30.5}
     yaw: 164.1
+    disabled: 1
   - name: Stop_26
     zone: 1
     position: {x: 118.5, y: 17.4}
     yaw: 180
+    disabled: 0
   - name: Stop_27
     zone: 2
     position: {x: 156.5, y: 17.8}
     yaw: 180
-  - name: Stop_28
-    zone: 2
-    position: {x: 171.5, y: 14.5}
-    yaw: 90
+    disabled: 1
   - name: Stop_29
     zone: 2
     position: {x: 139.7, y: 14.5}
     yaw: 90
+    disabled: 0
   - name: Stop_Depot
     zone: 1
     position: {x: 63, y: 38.5}
     yaw: 90
+    disabled: 0
   - name: Stop_Parking
     zone: 1
     position: {x: 63, y: 26}
     yaw: 90
+    disabled: 0
   barriers:
   - name: Bar_South_Z2
     closesZone: 2

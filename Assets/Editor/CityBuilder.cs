@@ -175,6 +175,7 @@ namespace Taxi.EditorTools
                 var stop = go.GetComponentInChildren<PassengerStop>();
                 stop.zone = pk.zone;
                 MarkStatic(go);
+                if (pk.disabled) go.SetActive(false);   // curbs (built after this) close inactive pockets
             }
 
             // ---- Zone barriers ------------------------------------------------------------------------------

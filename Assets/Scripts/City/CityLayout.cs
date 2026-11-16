@@ -14,7 +14,12 @@ namespace Taxi
         [Serializable] public class Road { public string name; public Vector2[] points; }
         [Serializable] public class Ring { public string name; public Vector2 center; public float radius; }
         [Serializable] public class Building { public string name; public int zone; public float height; public Vector2[] polygon; }
-        [Serializable] public class Pocket { public string name; public int zone; public Vector2 position; public float yaw; }
+        [Serializable] public class Pocket
+        {
+            public string name; public int zone; public Vector2 position; public float yaw;
+            [Tooltip("Built but inactive: no passengers, and the curb is closed in front of it.")]
+            public bool disabled;
+        }
         [Serializable] public class Barrier { public string name; public int closesZone; public Vector2 position; public float yaw; }
         [Serializable] public class Zone { public int id; public string name; public int price; public Rect rect; }
 

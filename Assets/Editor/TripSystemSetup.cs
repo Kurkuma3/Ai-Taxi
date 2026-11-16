@@ -129,17 +129,18 @@ namespace Taxi.EditorTools
         public static void ValidateStops()
         {
             var counts = new int[ZoneProgress.ZoneCount + 1];
-            int bad = 0;
+            int bad = 0, disabled = 0;
             var all = new System.Collections.Generic.List<PassengerStop>();
             foreach (var root in UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects())
                 all.AddRange(root.GetComponentsInChildren<PassengerStop>(true));
             foreach (var s in all)
             {
+                if (!s.gameObject.activeInHierarchy) { disabled++; continue; }   // inactive stops get no passengers
                 int z = s.ResolvedZone;
                 if (z < 1 || z > ZoneProgress.ZoneCount) { bad++; Debug.LogError("[Taxi] Stop without a valid zone: " + s.name, s); continue; }
                 counts[z]++;
             }
-            Debug.Log($"[Taxi] Passenger stops: Z1={counts[1]} Z2={counts[2]} Z3={counts[3]} Z4={counts[4]}, without zone={bad}");
+            Debug.Log($"[Taxi] Passenger stops: Z1={counts[1]} Z2={counts[2]} Z3={counts[3]} Z4={counts[4]}, without zone={bad}, disabled={disabled}");
         }
 
         // ---- helpers ----------------------------------------------------------------------------------------

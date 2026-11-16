@@ -103,10 +103,11 @@ namespace Taxi.EditorTools
                 new CityLayout.Pocket { name = "Stop_22", zone = 2, position = V(186.5f, 58.0f), yaw = 0.0f },
                 new CityLayout.Pocket { name = "Stop_23", zone = 1, position = V(94.8f, 53.2f), yaw = 117.4f },
                 new CityLayout.Pocket { name = "Stop_24", zone = 2, position = V(139.8f, 32.2f), yaw = 130.9f },
-                new CityLayout.Pocket { name = "Stop_25", zone = 2, position = V(160.4f, 30.5f), yaw = 164.1f },
+                // Stop_25 and Stop_27 sit behind a road barrier with no way in: kept in the data, disabled.
+                new CityLayout.Pocket { name = "Stop_25", zone = 2, position = V(160.4f, 30.5f), yaw = 164.1f, disabled = true },
                 new CityLayout.Pocket { name = "Stop_26", zone = 1, position = V(118.5f, 17.4f), yaw = 180.0f },
-                new CityLayout.Pocket { name = "Stop_27", zone = 2, position = V(156.5f, 17.8f), yaw = 180.0f },
-                new CityLayout.Pocket { name = "Stop_28", zone = 2, position = V(171.5f, 14.5f), yaw = 90.0f },
+                new CityLayout.Pocket { name = "Stop_27", zone = 2, position = V(156.5f, 17.8f), yaw = 180.0f, disabled = true },
+                // Stop_28 removed (author's request).
                 new CityLayout.Pocket { name = "Stop_29", zone = 2, position = V(139.7f, 14.5f), yaw = 90.0f },
                 // Start area (not in the sketch, added for Zone 1 variety): taxi depot in front of the garage, parking lot.
                 new CityLayout.Pocket { name = "Stop_Depot", zone = 1, position = V(63f, 38.5f), yaw = 90.0f },
