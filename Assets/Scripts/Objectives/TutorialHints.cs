@@ -3,9 +3,9 @@ using UnityEngine;
 namespace Taxi
 {
     /// <summary>
-    /// Animated finger hints, only in the tutorial steps:
-    /// - intro (objective 0): finger on the taxi, "Walk to your taxi", while on foot;
-    /// - Heavy bags (objective 2, the first luggage ride), step by step: get out (finger on the taxi), pick up the bag,
+    /// Tap-indicator hints (dot + pulsing ring), only in the tutorial steps:
+    /// - intro (objective 0): on the taxi, "Walk to your taxi", while on foot;
+    /// - Heavy bags (objective 2, the first luggage ride), step by step: get out (on the taxi), pick up the bag,
     ///   put it in the trunk; at the drop-off: get out, take it from the trunk, give it to the passenger.
     /// Each hint disappears as soon as its step is done (it is re-evaluated every frame from the game state).
     /// </summary>

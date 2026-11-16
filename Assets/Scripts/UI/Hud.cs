@@ -185,15 +185,17 @@ namespace Taxi
             BuildHint();
         }
 
-        // ---- Tutorial finger hint (requested every frame, hidden in LateUpdate when nobody asked) ------------------
+        // ---- Tutorial tap hint (requested every frame, hidden in LateUpdate when nobody asked) ---------------------
 
-        RectTransform hintFinger, hintLabelRoot;
+        RectTransform hintRoot, hintRing, hintLabelRoot;
+        Image hintRingImage;
         Text hintText;
         bool hintRequested;
         Vector3 hintWorld;
         string hintShown;
+        static readonly Color HintOutline = new Color(0f, 0f, 0f, 0.65f);
 
-        /// <summary>Animated finger tapping at a world point, with a short label under it. Call every frame while needed.</summary>
+        /// <summary>Tap indicator (dot + pulsing ring) at a world point, with a short label under it. Call every frame while needed.</summary>
         public void RequestHint(Vector3 worldPos, string text)
         {
             hintRequested = true;
@@ -201,48 +203,62 @@ namespace Taxi
             if (hintText != null && text != hintShown) { hintShown = text; hintText.text = text; }
         }
 
+        /// <summary>A small white dot and a white ring around it that expands and fades every second; both have a dark
+        /// outline so they read on any background.</summary>
         void BuildHint()
         {
-            var go = new GameObject("HintFinger", typeof(RectTransform), typeof(Image));
-            hintFinger = (RectTransform)go.transform;
-            hintFinger.SetParent(fareLabel.parent, false);
-            hintFinger.sizeDelta = new Vector2(150f, 150f);
-            hintFinger.pivot = new Vector2(0.5f, 1f);   // the fingertip is the top of the sprite
-            var img = go.GetComponent<Image>();
-            img.sprite = UiSprites.Finger(128);
-            img.raycastTarget = false;
-            go.AddComponent<Outline>().effectDistance = new Vector2(4f, -4f);
-            go.SetActive(false);
+            hintRoot = new GameObject("HintTap", typeof(RectTransform)).GetComponent<RectTransform>();
+            hintRoot.SetParent(fareLabel.parent, false);
+            hintRoot.sizeDelta = Vector2.zero;
+
+            hintRing = HintImage("Ring", UiSprites.Ring(128, 0.82f), 60f, out hintRingImage);
+            HintImage("Dot", UiSprites.Ring(64, 0f), 30f, out _);
+            hintRoot.gameObject.SetActive(false);
+
             hintLabelRoot = Banner("HintLabel", new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(620f, 76f),
                 new Color(0.1f, 0.1f, 0.12f, 0.8f), 40, Color.white, out hintText);
             hintLabelRoot.pivot = new Vector2(0.5f, 1f);
             hintLabelRoot.gameObject.SetActive(false);
         }
 
+        RectTransform HintImage(string name, Sprite sprite, float size, out Image image)
+        {
+            var go = new GameObject(name, typeof(RectTransform), typeof(Image));
+            var rt = (RectTransform)go.transform;
+            rt.SetParent(hintRoot, false);
+            rt.sizeDelta = new Vector2(size, size);
+            image = go.GetComponent<Image>();
+            image.sprite = sprite;
+            image.color = Color.white;
+            image.raycastTarget = false;
+            var outline = go.AddComponent<Outline>();
+            outline.effectColor = HintOutline;
+            outline.effectDistance = new Vector2(3f, -3f);
+            return rt;
+        }
+
         void LayoutHint()
         {
-            if (hintFinger == null) return;
+            if (hintRoot == null) return;
             bool on = hintRequested;
             hintRequested = false;
             Vector3 sp = on ? worldCamera.WorldToScreenPoint(hintWorld) : Vector3.zero;
             on &= sp.z > 0f;
-            if (hintFinger.gameObject.activeSelf != on)
+            if (hintRoot.gameObject.activeSelf != on)
             {
-                hintFinger.gameObject.SetActive(on);
+                hintRoot.gameObject.SetActive(on);
                 hintLabelRoot.gameObject.SetActive(on);
             }
             if (!on) return;
             float sc = canvas.scaleFactor;
-            // Tap: the tip dips onto the point and lifts off, with a slight squash on contact.
-            float t = Mathf.Repeat(Time.unscaledTime * 1.4f, 1f);
-            float lift = (t < 0.5f ? 1f - t * 2f : (t - 0.5f) * 2f) * 34f * sc;
-            float squash = t > 0.4f && t < 0.6f ? 0.9f : 1f;
-            // The hand comes from below-right, pointing up-left at the target.
-            Vector2 tip = new Vector2(sp.x, sp.y) + new Vector2(0.45f, -0.9f) * lift;
-            hintFinger.position = tip;
-            hintFinger.localRotation = Quaternion.Euler(0f, 0f, 25f);
-            hintFinger.localScale = new Vector3(squash, squash, 1f);
-            hintLabelRoot.position = new Vector2(sp.x, sp.y - 190f * sc);
+            hintRoot.position = new Vector2(sp.x, sp.y);
+            // Pulse: the ring grows from the dot to ~4x and fades out, once per second.
+            float t = Mathf.Repeat(Time.unscaledTime, 1f);
+            float e = 1f - (1f - t) * (1f - t);   // ease-out
+            float s = Mathf.Lerp(0.5f, 2.4f, e);
+            hintRing.localScale = new Vector3(s, s, 1f);
+            hintRingImage.color = new Color(1f, 1f, 1f, 1f - t);
+            hintLabelRoot.position = new Vector2(sp.x, sp.y - 110f * sc);
         }
 
         RectTransform payRoot;
@@ -752,28 +768,6 @@ namespace Taxi
             tex.SetPixels32(px);
             tex.Apply();
             return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 100f);
-        }
-
-        /// <summary>Pointing hand, fingertip at the top centre: index finger, palm and thumb as rounded shapes, white.</summary>
-        public static Sprite Finger(int size)
-        {
-            var tex = new Texture2D(size, size, TextureFormat.RGBA32, false) { filterMode = FilterMode.Bilinear };
-            var px = new Color32[size * size];
-            float s = size;
-            for (int y = 0; y < size; y++)
-            for (int x = 0; x < size; x++)
-            {
-                float fx = x + 0.5f, fy = y + 0.5f;
-                float finger = RoundRect(fx, fy, s * 0.40f, s * 0.42f, s * 0.60f, s * 0.99f, s * 0.10f);
-                float palm = RoundRect(fx, fy, s * 0.30f, s * 0.04f, s * 0.80f, s * 0.52f, s * 0.13f);
-                float knuckles = RoundRect(fx, fy, s * 0.58f, s * 0.30f, s * 0.82f, s * 0.56f, s * 0.08f);
-                float thumb = RoundRect(fx, fy, s * 0.16f, s * 0.22f, s * 0.36f, s * 0.46f, s * 0.09f);
-                float a = Mathf.Max(Mathf.Max(finger, palm), Mathf.Max(knuckles, thumb));
-                px[y * size + x] = new Color32(255, 255, 255, (byte)(a * 255f));
-            }
-            tex.SetPixels32(px);
-            tex.Apply();
-            return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 1f), 100f);
         }
 
         /// <summary>Coverage 0..1 of a pixel by a rounded rectangle (1 px soft edge).</summary>
