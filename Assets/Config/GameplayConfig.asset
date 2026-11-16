@@ -49,6 +49,11 @@ MonoBehaviour:
   cameraLookAheadRate: 2
   cameraFollowSmoothing: 6
   cameraModeBlendRate: 2.5
+  cameraShakeMinImpact: 4
+  cameraShakeFullImpact: 12
+  cameraShakeAmplitude: 0.6
+  cameraShakeTime: 0.2
+  cameraShakeFrequency: 35
   reverseEnterAngle: 120
   reverseExitAngle: 80
   reverseEnterSpeed: 1.5

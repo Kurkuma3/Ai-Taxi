@@ -20,6 +20,22 @@ namespace Taxi
         float carBlend;     // 0 = foot offset, 1 = car offset
         float zoom;         // 0..1, smoothed |speed| / maxSpeed
         Vector3 lookAhead;  // smoothed world offset in front of the car
+        Vector3 basePos;    // smoothed follow position without shake
+        float shakeStart = -10f, shakeAmp;
+
+        void OnEnable() { if (car != null) car.Bumped += OnBump; }
+        void OnDisable() { if (car != null) car.Bumped -= OnBump; }
+
+        /// <summary>Shake on a hit: amplitude grows with the impact speed above cameraShakeMinImpact.</summary>
+        void OnBump(float impact)
+        {
+            float k = Mathf.InverseLerp(config.cameraShakeMinImpact, config.cameraShakeFullImpact, impact);
+            if (k <= 0f) return;   // light touch: no shake
+            float amp = k * config.cameraShakeAmplitude;
+            if (Time.time - shakeStart < config.cameraShakeTime && amp < shakeAmp) return;   // a stronger shake is running
+            shakeAmp = amp;
+            shakeStart = Time.time;
+        }
 
         void Start()
         {
@@ -27,6 +43,7 @@ namespace Taxi
             Vector3 off = CurrentOffset();
             transform.rotation = Quaternion.LookRotation(-off.normalized, Vector3.up);
             if (target != null) transform.position = target.position + off;
+            basePos = transform.position;
         }
 
         bool IsCarTarget => car != null && target == car.transform;
@@ -56,8 +73,19 @@ namespace Taxi
             Vector3 off = CurrentOffset();
             Vector3 goal = target.position + lookAhead * carBlend + off;
             float t = 1f - Mathf.Exp(-config.cameraFollowSmoothing * dt);
-            transform.position = Vector3.Lerp(transform.position, goal, t);
+            basePos = Vector3.Lerp(basePos, goal, t);
+            transform.position = basePos + ShakeOffset();
             transform.rotation = Quaternion.LookRotation(-off.normalized, Vector3.up);
+        }
+
+        /// <summary>Decaying jitter in the ground plane (Perlin, no allocations) for cameraShakeTime after a hit.</summary>
+        Vector3 ShakeOffset()
+        {
+            float k = (Time.time - shakeStart) / Mathf.Max(0.01f, config.cameraShakeTime);
+            if (k >= 1f) return Vector3.zero;
+            float a = shakeAmp * (1f - k) * (1f - k);
+            float f = Time.time * config.cameraShakeFrequency;
+            return new Vector3((Mathf.PerlinNoise(f, 0.3f) - 0.5f) * 2f * a, 0f, (Mathf.PerlinNoise(0.7f, f) - 0.5f) * 2f * a);
         }
 
         Vector3 CurrentOffset()

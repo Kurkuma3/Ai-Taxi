@@ -78,6 +78,16 @@ namespace Taxi
         public float cameraFollowSmoothing = 6f;
         [Tooltip("Foot <-> car transition speed when getting in or out (exponential rate, 1/s).")]
         public float cameraModeBlendRate = 2.5f;
+        [Tooltip("Hits below this impact speed (m/s into the obstacle) do not shake the camera.")]
+        public float cameraShakeMinImpact = 4f;
+        [Tooltip("Impact speed (m/s) that gives the full shake amplitude.")]
+        public float cameraShakeFullImpact = 12f;
+        [Tooltip("Max camera shake, metres.")]
+        public float cameraShakeAmplitude = 0.6f;
+        [Tooltip("Shake length, seconds.")]
+        public float cameraShakeTime = 0.2f;
+        [Tooltip("Shake jitter speed (noise frequency, 1/s).")]
+        public float cameraShakeFrequency = 35f;
 
         [Header("Car reverse (automatic: stick pointing behind the car)")]
         [Tooltip("Stick this many degrees or more away from the heading means 'back up', not 'turn around'.")]
