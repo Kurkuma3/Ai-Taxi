@@ -39,6 +39,18 @@ namespace Taxi
         [Tooltip("How fast pitch and volume follow the speed (exponential rate, 1/s).")]
         public float engineResponse = 4f;
 
+        [Header("Body tilt (visual only)")]
+        [Tooltip("Roll in degrees per (deg/s of turning x speed fraction). Higher = more lean in turns.")]
+        public float tiltRollFactor = 0.035f;
+        [Tooltip("Max roll, degrees.")]
+        public float tiltRollMax = 4f;
+        [Tooltip("Pitch in degrees per m/s^2 of acceleration: nose dips when braking, squats when accelerating.")]
+        public float tiltPitchFactor = 0.3f;
+        [Tooltip("Max pitch, degrees.")]
+        public float tiltPitchMax = 3.5f;
+        [Tooltip("How fast the body follows (exponential rate, 1/s). Lower = softer suspension.")]
+        public float tiltResponse = 8f;
+
         [Header("Skid marks")]
         [Tooltip("Hard turn: marks appear from this speed (m/s) ...")]
         public float skidMinSpeed = 8f;

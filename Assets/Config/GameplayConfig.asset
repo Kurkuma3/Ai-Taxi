@@ -28,6 +28,11 @@ MonoBehaviour:
   engineIdleVolume: 0.12
   engineMaxVolume: 0.45
   engineResponse: 4
+  tiltRollFactor: 0.035
+  tiltRollMax: 4
+  tiltPitchFactor: 0.3
+  tiltPitchMax: 3.5
+  tiltResponse: 8
   skidMinSpeed: 8
   skidSteer: 0.85
   skidBrakeMinSpeed: 9

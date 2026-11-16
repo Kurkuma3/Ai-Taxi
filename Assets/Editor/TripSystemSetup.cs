@@ -67,6 +67,10 @@ namespace Taxi.EditorTools
             Set(skid, "config", cfg);
             Set(skid, "material", SkidMaterial());
 
+            // ---- Body tilt (visual roll / pitch of the body parts) ----
+            var tilt = GetOrAdd<CarBodyTilt>(car.gameObject);
+            Set(tilt, "config", cfg);
+
             var engine = GetOrAdd<EngineAudio>(car.gameObject);
             Set(engine, "config", cfg);
             Set(engine, "car", car);
