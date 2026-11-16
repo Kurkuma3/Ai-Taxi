@@ -25564,6 +25564,7 @@ GameObject:
   - component: {fileID: 1151517015}
   - component: {fileID: 1151517017}
   - component: {fileID: 1151517016}
+  - component: {fileID: 1151517018}
   m_Layer: 0
   m_Name: Car
   m_TagString: Untagged
@@ -25774,6 +25775,20 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &1151517018
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1151517010}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9c4cbdf77d761334584c012ea5ea4103, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Taxi.Runtime::Taxi.SkidMarks
+  config: {fileID: 11400000, guid: 74d7e2b5b595a1549aca00f81d139ef4, type: 2}
+  material: {fileID: 2100000, guid: 13d326aa00347b2448f0db72584ddfbd, type: 2}
 --- !u!1 &1154228907
 GameObject:
   m_ObjectHideFlags: 0

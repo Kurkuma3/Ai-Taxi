@@ -62,6 +62,11 @@ namespace Taxi.EditorTools
             engineSrc.loop = true;
             engineSrc.playOnAwake = false;
             engineSrc.spatialBlend = 0f;
+            // ---- Skid marks (trails under the rear wheels, one transparent material) ----
+            var skid = GetOrAdd<SkidMarks>(car.gameObject);
+            Set(skid, "config", cfg);
+            Set(skid, "material", SkidMaterial());
+
             var engine = GetOrAdd<EngineAudio>(car.gameObject);
             Set(engine, "config", cfg);
             Set(engine, "car", car);
@@ -227,6 +232,28 @@ namespace Taxi.EditorTools
             }
             m.SetColor("_BaseColor", Color.white);   // tinted per renderer through a MaterialPropertyBlock
             m.enableInstancing = true;
+            EditorUtility.SetDirty(m);
+            return m;
+        }
+
+        /// <summary>Transparent unlit particle material for skid marks (colour and alpha come from the trail's vertex colours).</summary>
+        static Material SkidMaterial()
+        {
+            const string path = "Assets/Art/Materials/SkidMark.mat";
+            var m = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (m == null)
+            {
+                m = new Material(Shader.Find("Universal Render Pipeline/Particles/Unlit"));
+                AssetDatabase.CreateAsset(m, path);
+            }
+            m.SetColor("_BaseColor", Color.white);
+            m.SetFloat("_Surface", 1f);                 // transparent
+            m.SetFloat("_Blend", 0f);                   // alpha blend
+            m.SetFloat("_SrcBlend", (float)UnityEngine.Rendering.BlendMode.SrcAlpha);
+            m.SetFloat("_DstBlend", (float)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            m.SetFloat("_ZWrite", 0f);
+            m.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            m.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
             EditorUtility.SetDirty(m);
             return m;
         }

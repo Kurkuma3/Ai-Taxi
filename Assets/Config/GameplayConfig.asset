@@ -28,6 +28,12 @@ MonoBehaviour:
   engineIdleVolume: 0.12
   engineMaxVolume: 0.45
   engineResponse: 4
+  skidMinSpeed: 8
+  skidSteer: 0.85
+  skidBrakeMinSpeed: 9
+  skidFadeTime: 2
+  skidWidth: 0.28
+  skidAlpha: 0.55
   headlightOn: {r: 1, g: 0.97, b: 0.8, a: 1}
   headlightOff: {r: 0.55, g: 0.55, b: 0.5, a: 1}
   brakeLightOn: {r: 1, g: 0.05, b: 0.05, a: 1}

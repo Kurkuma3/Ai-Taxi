@@ -25,6 +25,8 @@ namespace Taxi
         public float Speed { get; private set; }
         public bool HasInput { get; private set; }
         public bool IsReversing { get; private set; }
+        /// <summary>0..1, how hard the wheel is turned right now (0 without input).</summary>
+        public float SteerAmount => Mathf.Abs(steer);
         /// <summary>Slowing down while moving (for the brake lights).</summary>
         public bool IsBraking { get; private set; }
         /// <summary>Current forward top speed (config.maxSpeed, raised by the Engine upgrade).</summary>

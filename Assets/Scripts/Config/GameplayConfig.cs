@@ -39,6 +39,18 @@ namespace Taxi
         [Tooltip("How fast pitch and volume follow the speed (exponential rate, 1/s).")]
         public float engineResponse = 4f;
 
+        [Header("Skid marks")]
+        [Tooltip("Hard turn: marks appear from this speed (m/s) ...")]
+        public float skidMinSpeed = 8f;
+        [Tooltip("... with the wheel turned at least this much (0..1, 1 = full lock).")]
+        [Range(0f, 1f)] public float skidSteer = 0.85f;
+        [Tooltip("Hard braking: marks appear when braking from this speed (m/s) or faster.")]
+        public float skidBrakeMinSpeed = 9f;
+        [Tooltip("Seconds a mark takes to fade away.")]
+        public float skidFadeTime = 2f;
+        public float skidWidth = 0.28f;
+        [Range(0f, 1f)] public float skidAlpha = 0.55f;
+
         [Header("Car lights (unlit plates, no real-time light)")]
         public Color headlightOn = new Color(1f, 0.97f, 0.8f);
         public Color headlightOff = new Color(0.55f, 0.55f, 0.5f);
