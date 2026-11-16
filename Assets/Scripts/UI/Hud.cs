@@ -118,7 +118,7 @@ namespace Taxi
             if (fareLabel != null) fareLabel.gameObject.SetActive(false);
             BuildOrderMarkers();
             BuildBanners();
-            int n = Mathf.Clamp(config.coinsPerPayment, 1, 32);
+            int n = Mathf.Clamp(config.coinsPerPayment, 1, 32) + Mathf.Clamp(config.tipCoins, 0, 16);   // fare + tip coins
             coins = new Coin[n];
             var disc = UiSprites.Ring(64, 0f);
             coinTemplate.sprite = disc;
@@ -147,6 +147,66 @@ namespace Taxi
                 new Color(0.1f, 0.1f, 0.12f, 0.8f), 52, new Color(1f, 0.86f, 0.25f), out toastText);
             objectiveRoot.gameObject.SetActive(false);
             toastRoot.gameObject.SetActive(false);
+
+            // Floating payment label: "+$27" and "+$7 tip" under it, no background.
+            payRoot = Banner("PayLabel", new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(420f, 90f),
+                Color.clear, 72, payColor, out payText);
+            payRoot.pivot = new Vector2(0.5f, 0.5f);
+            var tipGo = Instantiate(payText.gameObject, payRoot);
+            tipGo.name = "Tip";
+            tipText = tipGo.GetComponent<Text>();
+            tipText.fontSize = 46;
+            var tipRt = tipText.rectTransform;
+            tipRt.anchorMin = tipRt.anchorMax = new Vector2(0.5f, 0f);
+            tipRt.pivot = new Vector2(0.5f, 1f);
+            tipRt.sizeDelta = new Vector2(420f, 60f);
+            tipRt.anchoredPosition = Vector2.zero;
+            var outline = payText.gameObject.AddComponent<Outline>();
+            outline.effectDistance = new Vector2(3f, -3f);
+            tipGo.AddComponent<Outline>().effectDistance = new Vector2(3f, -3f);
+            payRoot.gameObject.SetActive(false);
+        }
+
+        RectTransform payRoot;
+        Text payText, tipText;
+        Vector2 payFrom;
+        float payStart = -1f;
+        static readonly Color payColor = new Color(1f, 0.86f, 0.25f);
+        static readonly Color tipColor = new Color(0.55f, 1f, 0.55f);
+
+        void ShowPayLabel(Vector2 screenPos, int fare, int tip)
+        {
+            if (payRoot == null) return;
+            payText.text = "+$" + fare;
+            tipText.gameObject.SetActive(tip > 0);
+            if (tip > 0) tipText.text = "+$" + tip + " tip";
+            payFrom = screenPos;
+            payStart = Time.unscaledTime;
+            payRoot.position = screenPos;
+            payRoot.gameObject.SetActive(true);
+            SetPayAlpha(1f);
+        }
+
+        void SetPayAlpha(float a)
+        {
+            payText.color = new Color(payColor.r, payColor.g, payColor.b, a);
+            tipText.color = new Color(tipColor.r, tipColor.g, tipColor.b, a);
+        }
+
+        /// <summary>The label rises for payLabelTime and fades out over its last 30%.</summary>
+        void UpdatePayLabel()
+        {
+            if (payStart < 0f) return;
+            float k = (Time.unscaledTime - payStart) / Mathf.Max(0.1f, config.payLabelTime);
+            if (k >= 1f)
+            {
+                payStart = -1f;
+                payRoot.gameObject.SetActive(false);
+                return;
+            }
+            float rise = 140f * canvas.scaleFactor * (1f - (1f - k) * (1f - k));
+            payRoot.position = payFrom + new Vector2(0f, rise);
+            SetPayAlpha(k < 0.7f ? 1f : 1f - (k - 0.7f) / 0.3f);
         }
 
         RectTransform Banner(string name, Vector2 anchor, Vector2 pos, Vector2 size, Color bg, int fontSize, Color textColor, out Text text)
@@ -359,8 +419,14 @@ namespace Taxi
             if (moneyText != null) moneyText.text = "$" + value;
         }
 
-        /// <summary>Coins fly from the world point to the counter, then the counter counts up to newTotal.</summary>
-        public void PlayPayment(Vector3 fromWorld, int newTotal)
+        int FareCoins => Mathf.Clamp(config.coinsPerPayment, 1, 32);
+
+        /// <summary>
+        /// Coins fly from the world point to the counter, then the counter counts up to newTotal. With a tip, a second
+        /// burst of tipCoins follows after tipCoinDelay. With fare > 0 a "+$27" label (and "+$7 tip" under it) rises
+        /// from the payment point.
+        /// </summary>
+        public void PlayPayment(Vector3 fromWorld, int newTotal, int fare = 0, int tip = 0)
         {
             if (coins == null) { if (moneyText != null) moneyText.text = "$" + newTotal; return; }
             Vector3 sp = worldCamera.WorldToScreenPoint(fromWorld);
@@ -368,7 +434,9 @@ namespace Taxi
             Vector2 to = moneyRoot.position;
             float now = Time.unscaledTime;
             float spread = 0.06f * Screen.height;
-            for (int i = 0; i < coins.Length; i++)
+            int fareCoins = Mathf.Min(FareCoins, coins.Length);
+            int count = tip > 0 ? coins.Length : fareCoins;
+            for (int i = 0; i < count; i++)
             {
                 ref var c = ref coins[i];
                 c.from = from + Random.insideUnitCircle * spread * 0.5f;
@@ -376,11 +444,13 @@ namespace Taxi
                 c.ctrl = Vector2.Lerp(c.from, to, 0.3f) + new Vector2(Random.Range(-1f, 1f) * spread * 2f, -spread);
                 c.to = to;
                 c.toCounter = true;
-                c.start = now + i * config.coinStagger;
+                bool tipCoin = i >= fareCoins;
+                c.start = now + i * config.coinStagger + (tipCoin ? config.tipCoinDelay : 0f);
                 c.flying = true;
                 c.rt.position = c.from;
                 c.rt.gameObject.SetActive(true);
             }
+            if (fare > 0) ShowPayLabel(from, fare, tip);
             coinIndexInBurst = 0;
             countFrom = shownMoney;
             countTo = newTotal;
@@ -396,7 +466,8 @@ namespace Taxi
             Vector2 from = moneyRoot.position;
             float now = Time.unscaledTime;
             float spread = 0.06f * Screen.height;
-            for (int i = 0; i < coins.Length; i++)
+            int count = Mathf.Min(FareCoins, coins.Length);
+            for (int i = 0; i < count; i++)
             {
                 ref var c = ref coins[i];
                 c.from = from;
@@ -430,6 +501,7 @@ namespace Taxi
                 toastUntil = -1f;
                 toastRoot.gameObject.SetActive(false);
             }
+            UpdatePayLabel();
             if (coins == null) return;
             float now = Time.unscaledTime;
             for (int i = 0; i < coins.Length; i++)

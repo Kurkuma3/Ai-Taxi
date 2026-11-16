@@ -168,6 +168,14 @@ namespace Taxi
         public int startMoney = 50;
         public float moneyCountUpTime = 0.8f;
         public int coinsPerPayment = 8;
+        [Tooltip("Tip as a fraction of the fare by ride rating: element 0 = 1 star ... element 4 = 5 stars.")]
+        public float[] tipByStars = { 0f, 0f, 0f, 0.10f, 0.25f };
+        [Tooltip("Extra coins that fly for the tip (after the fare coins).")]
+        public int tipCoins = 4;
+        [Tooltip("Pause between the last fare coin and the first tip coin, seconds.")]
+        public float tipCoinDelay = 0.2f;
+        [Tooltip("How long the floating \"+$27 / +$7 tip\" label rises and fades at the payment point, seconds.")]
+        public float payLabelTime = 1.6f;
         public float coinFlightTime = 0.55f;
         [Tooltip("Delay between consecutive coins, seconds.")]
         public float coinStagger = 0.05f;

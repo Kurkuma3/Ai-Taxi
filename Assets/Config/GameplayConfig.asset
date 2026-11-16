@@ -94,6 +94,15 @@ MonoBehaviour:
   startMoney: 50
   moneyCountUpTime: 0.8
   coinsPerPayment: 8
+  tipByStars:
+  - 0
+  - 0
+  - 0
+  - 0.1
+  - 0.25
+  tipCoins: 4
+  tipCoinDelay: 0.2
+  payLabelTime: 1.6
   coinFlightTime: 0.55
   coinStagger: 0.05
   zonePrices: 00000000960000002c01000058020000i

@@ -76,6 +76,7 @@ namespace Taxi
             public int bumps;   // hits of at least bumpMinImpactSpeed while the passenger was on board
             public int stars;   // 1..5
             public int fare;
+            public int tip;     // paid on top of the fare (tipByStars)
         }
         public event System.Action<RideResult> RideCompleted;
         /// <summary>Set by the objectives while they need a luggage ride: each new set of orders then has one.</summary>
@@ -550,6 +551,7 @@ namespace Taxi
             committedSlot = -1;
             TripsTaken++;
             rideBumps = 0;
+            rideTip = 0;
             Enter(State.Riding);
         }
 
@@ -560,6 +562,27 @@ namespace Taxi
 
         /// <summary>5 stars minus starsLostPerBump per bump during the ride, at least 1.</summary>
         int RideStars => Mathf.Clamp(5 - rideBumps * Mathf.Max(0, config.starsLostPerBump), 1, 5);
+
+        int rideTip;
+
+        /// <summary>Tip for the current ride: fare x tipByStars[stars - 1], rounded half up.</summary>
+        int TipFor(int fare, int stars)
+        {
+            var t = config.tipByStars;
+            if (t == null || t.Length == 0) return 0;
+            float pct = t[Mathf.Clamp(stars - 1, 0, t.Length - 1)];
+            return Mathf.Max(0, Mathf.FloorToInt(fare * pct + 0.5f));
+        }
+
+        /// <summary>Payment: fare + tip into the wallet, coins (fare burst, then tip burst), "+$27 / +$7 tip" label, rating.</summary>
+        void Pay(Vector3 at)
+        {
+            int fare = ride.trip.fare;
+            rideTip = TipFor(fare, RideStars);
+            wallet.Add(fare + rideTip, at);
+            hud.PlayPayment(at + Vector3.up * 1.5f, wallet.Money, fare, rideTip);
+            ShowRating();
+        }
 
         /// <summary>Rating toast at the moment of payment ("★★★★★ perfect ride!").</summary>
         void ShowRating()
@@ -578,7 +601,7 @@ namespace Taxi
             RideCompleted?.Invoke(new RideResult
             {
                 luggage = ride.trip.luggage, fromZone = ride.trip.fromZone, toZone = ride.trip.toZone,
-                bumps = rideBumps, stars = RideStars, fare = ride.trip.fare,
+                bumps = rideBumps, stars = RideStars, fare = ride.trip.fare, tip = rideTip,
             });
             // The passenger (and a delivered suitcase) stays at the stop for a moment, then disappears.
             ReleasePassenger(leaving);
@@ -662,9 +685,7 @@ namespace Taxi
         {
             ride.luggage = Luggage.Delivered;
             PlaceSuitcase(ride.suitcase, dropPoint, ride.passenger.transform.eulerAngles.y);
-            wallet.Add(ride.trip.fare, dropPoint);
-            ShowRating();
-            hud.PlayPayment(dropPoint + Vector3.up * 1.5f, wallet.Money);
+            Pay(dropPoint);
             lastDropoff = ride.trip.dropoff;
             FinishRide();
         }
@@ -728,9 +749,7 @@ namespace Taxi
                     routeHint.Hide();
                     if (ride.trip.luggage) break;   // paid when the suitcase is delivered (AwaitLuggage)
                     lastDropoff = ride.trip.dropoff;
-                    wallet.Add(ride.trip.fare, door);
-                    ShowRating();
-                    hud.PlayPayment(door + Vector3.up * 1.5f, wallet.Money);
+                    Pay(door);
                     break;
                 }
 
