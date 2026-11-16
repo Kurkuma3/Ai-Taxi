@@ -24,4 +24,4 @@ The rating is 5 stars minus 1 per bump (`starsLostPerBump`).
 ## Measured lengths
 
 Not measured yet: Play Mode and phone tests have not been run for this version.
-After a playtest, copy the objective log (Development build: DBG button > Copy log; file `objective_log.csv` in persistentDataPath) and fill the table with the real durations.
+After a playtest, copy the objective log (Development build: DBG button > Copy log; one file per run, `objective_log_<date>_<time>.csv` in persistentDataPath) and fill the table with the real durations.

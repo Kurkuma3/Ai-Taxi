@@ -6,30 +6,51 @@ using UnityEngine;
 namespace Taxi
 {
     /// <summary>
-    /// Measures the intro and the objectives. Every finished step is appended to
-    /// Application.persistentDataPath/objective_log.csv (number, title, start, finish, duration_s, attempts) and printed
-    /// as "[OBJ] 6 Long haul — 54.2 s"; after the last objective "[OBJ] Total — 12:34" (sum of objectives 1..N).
-    /// A run that starts from the intro (fresh progress) starts a new file; a resumed run appends.
+    /// Measures the intro and the objectives. Each run has its own file in Application.persistentDataPath,
+    /// objective_log_yyyy-MM-dd_HH-mm.csv (number, title, start, finish, duration_s, attempts). A line is appended (and the
+    /// file closed) the moment each step finishes, so a crash or restart loses nothing. Old files are never overwritten
+    /// or deleted, resetProgressOnLaunch included. A run that starts from the intro gets a new file; a resumed run
+    /// (resetProgressOnLaunch off) continues its file, remembered in PlayerPrefs.
+    /// Console: "[OBJ] 6 Long haul — 54.2 s"; after the last objective "[OBJ] Total — 12:34" (sum of objectives 1..N).
     /// </summary>
     public class ObjectiveLog : MonoBehaviour
     {
-        public const string FileName = "objective_log.csv";
+        public const string FilePrefix = "objective_log";
+        public const string FileKey = "Taxi.ObjectiveLogFile";
         const string Header = "number,title,start,finish,duration_s,attempts";
 
         [SerializeField] ObjectiveTracker tracker;
 
-        public static string FilePath => Path.Combine(Application.persistentDataPath, FileName);
+        public static string Folder => Application.persistentDataPath;
+        /// <summary>File of the current run (null until Start).</summary>
+        public static string FilePath { get; private set; }
 
         void Start()
         {
             bool fresh = PlayerPrefs.GetInt(ObjectiveTracker.SaveKey, 0) == 0;
-            try
+            string remembered = PlayerPrefs.GetString(FileKey, "");
+            string resumePath = remembered.Length > 0 ? Path.Combine(Folder, remembered) : null;
+            if (!fresh && resumePath != null && File.Exists(resumePath)) FilePath = resumePath;
+            else
             {
-                if (fresh || !File.Exists(FilePath)) File.WriteAllText(FilePath, Header + "\n");
+                FilePath = NewRunPath();
+                try { File.WriteAllText(FilePath, Header + "\n"); }   // a new name, never an existing file
+                catch (Exception e) { Debug.LogWarning("[OBJ] Cannot write " + FilePath + ": " + e.Message); }
+                PlayerPrefs.SetString(FileKey, Path.GetFileName(FilePath));
+                PlayerPrefs.Save();
             }
-            catch (Exception e) { Debug.LogWarning("[OBJ] Cannot write " + FilePath + ": " + e.Message); }
+            Debug.Log("[OBJ] Log: " + FilePath);
             tracker.Completed += OnCompleted;
             tracker.AllCompleted += OnAllCompleted;
+        }
+
+        /// <summary>objective_log_2026-11-16_16-07.csv; _2, _3 ... if that minute already has a file.</summary>
+        static string NewRunPath()
+        {
+            string stamp = DateTime.Now.ToString("yyyy-MM-dd_HH-mm", CultureInfo.InvariantCulture);
+            string path = Path.Combine(Folder, FilePrefix + "_" + stamp + ".csv");
+            for (int n = 2; File.Exists(path); n++) path = Path.Combine(Folder, FilePrefix + "_" + stamp + "_" + n + ".csv");
+            return path;
         }
 
         void OnDestroy()

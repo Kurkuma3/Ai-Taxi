@@ -5,8 +5,9 @@ namespace Taxi
 {
     /// <summary>
     /// Tiny debug panel for playtests, only in development builds and the editor (Debug.isDebugBuild).
-    /// A small "DBG" button in the top-left corner opens it: the objective log path and a "Copy log" button that puts
-    /// the CSV on the clipboard. IMGUI keeps it out of the game HUD; it costs nothing in release builds (disabled).
+    /// A small "DBG" button in the top-left corner opens it: the current run's objective log path, "Copy log" (puts that
+    /// CSV on the clipboard) and, in the editor and on desktop, "Open folder" (shows the folder with all run logs).
+    /// IMGUI keeps it out of the game HUD; it costs nothing in release builds (disabled).
     /// </summary>
     public class DebugPanel : MonoBehaviour
     {
@@ -33,22 +34,43 @@ namespace Taxi
             if (GUI.Button(new Rect(16 * u, 16 * u, 110 * u, 64 * u), open ? "×" : "DBG", button)) open = !open;
             if (!open) return;
 
-            var area = new Rect(16 * u, 90 * u, Screen.width - 32 * u, 330 * u);
+            var area = new Rect(16 * u, 90 * u, Screen.width - 32 * u, 420 * u);
             GUI.Box(area, GUIContent.none);
             GUILayout.BeginArea(new Rect(area.x + 12 * u, area.y + 12 * u, area.width - 24 * u, area.height - 24 * u));
-            GUILayout.Label("Objective log:\n" + ObjectiveLog.FilePath, label);
-            if (GUILayout.Button("Copy log", button, GUILayout.Height(80 * u)))
-            {
-                try
-                {
-                    string text = File.Exists(ObjectiveLog.FilePath) ? File.ReadAllText(ObjectiveLog.FilePath) : "";
-                    GUIUtility.systemCopyBuffer = text;
-                    status = text.Length > 0 ? "Copied " + text.Split('\n').Length + " lines" : "Log is empty";
-                }
-                catch (System.Exception e) { status = "Copy failed: " + e.Message; }
-            }
+            GUILayout.Label("Objective log (this run):\n" + (ObjectiveLog.FilePath ?? "not started"), label);
+            if (GUILayout.Button("Copy log", button, GUILayout.Height(80 * u))) CopyLog();
+            if (CanOpenFolder && GUILayout.Button("Open folder", button, GUILayout.Height(80 * u))) OpenFolder();
             GUILayout.Label(status, label);
             GUILayout.EndArea();
+        }
+
+        void CopyLog()
+        {
+            try
+            {
+                string path = ObjectiveLog.FilePath;
+                string text = path != null && File.Exists(path) ? File.ReadAllText(path) : "";
+                GUIUtility.systemCopyBuffer = text;
+                status = text.Length > 0 ? "Copied " + text.TrimEnd('\n').Split('\n').Length + " lines" : "Log is empty";
+            }
+            catch (System.Exception e) { status = "Copy failed: " + e.Message; }
+        }
+
+        static bool CanOpenFolder =>
+            Application.isEditor || Application.platform == RuntimePlatform.WindowsPlayer
+                                 || Application.platform == RuntimePlatform.OSXPlayer
+                                 || Application.platform == RuntimePlatform.LinuxPlayer;
+
+        void OpenFolder()
+        {
+#if UNITY_EDITOR
+            // Reveal the current file (selects it in Explorer); falls back to the folder itself.
+            string path = ObjectiveLog.FilePath;
+            UnityEditor.EditorUtility.RevealInFinder(path != null && File.Exists(path) ? path : ObjectiveLog.Folder);
+#else
+            Application.OpenURL("file:///" + ObjectiveLog.Folder.Replace('\\', '/'));
+#endif
+            status = "Opened " + ObjectiveLog.Folder;
         }
     }
 }
