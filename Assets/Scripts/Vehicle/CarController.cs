@@ -25,6 +25,8 @@ namespace Taxi
         public float Speed { get; private set; }
         public bool HasInput { get; private set; }
         public bool IsReversing { get; private set; }
+        /// <summary>Slowing down while moving (for the brake lights).</summary>
+        public bool IsBraking { get; private set; }
         /// <summary>Current forward top speed (config.maxSpeed, raised by the Engine upgrade).</summary>
         public float MaxSpeed => upgrades != null ? upgrades.MaxSpeed : config.maxSpeed;
         public bool IsStopped =>!HasInput && Mathf.Abs(Speed) < config.stoppedSpeedThreshold;
@@ -91,7 +93,13 @@ namespace Taxi
             bool speedingUp = targetSpeed * Speed >= 0f && Mathf.Abs(targetSpeed) > Mathf.Abs(Speed);
             float rate = speedingUp ? config.acceleration * (upgrades != null ? upgrades.AccelerationMultiplier : 1f)
                                     : config.brakeDeceleration;
+            // Brake lights: slowing down (or reversing direction) while still moving.
+            IsBraking = !speedingUp && Mathf.Abs(Speed) > 0.3f && Mathf.Abs(targetSpeed - Speed) > 0.05f;
             Speed = Mathf.MoveTowards(Speed, targetSpeed, rate * dt);
+
+            // Yaw spin from contacts: keep only collisionSpinKeep of it, so a hit never spins the car sideways.
+            Vector3 av = rb.angularVelocity;
+            rb.angularVelocity = new Vector3(0f, av.y * config.collisionSpinKeep, 0f);
 
             if (steer != 0f && HasInput)
             {

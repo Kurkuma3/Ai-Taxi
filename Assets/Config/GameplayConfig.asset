@@ -15,13 +15,20 @@ MonoBehaviour:
   maxSpeed: 12
   acceleration: 10
   brakeDeceleration: 18
-  turningSpeedFactor: 0.75
-  turnRateDegPerSec: 130
-  steerFullAngle: 35
-  fullTurnSpeed: 4
-  minTurnFactor: 0.5
-  collisionSpeedKeep: 0.3
+  turningSpeedFactor: 0.85
+  turnRateDegPerSec: 155
+  steerFullAngle: 25
+  fullTurnSpeed: 2.5
+  minTurnFactor: 0.7
+  collisionSpeedKeep: 0.6
+  collisionSpinKeep: 0
   stoppedSpeedThreshold: 0.25
+  headlightOn: {r: 1, g: 0.97, b: 0.8, a: 1}
+  headlightOff: {r: 0.55, g: 0.55, b: 0.5, a: 1}
+  brakeLightOn: {r: 1, g: 0.05, b: 0.05, a: 1}
+  brakeLightOff: {r: 0.4, g: 0.05, b: 0.05, a: 1}
+  reverseLightOn: {r: 1, g: 1, b: 1, a: 1}
+  reverseLightOff: {r: 0.25, g: 0.25, b: 0.25, a: 1}
   cameraFootOffset: {x: 0, y: 18, z: -8}
   cameraCarOffset: {x: 0, y: 30, z: -13.3}
   cameraSpeedZoomHeight: 8

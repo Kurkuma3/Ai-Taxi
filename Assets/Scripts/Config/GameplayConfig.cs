@@ -10,18 +10,32 @@ namespace Taxi
         public float maxSpeed = 12f;
         public float acceleration = 10f;
         public float brakeDeceleration = 18f;
-        [Tooltip("Speed multiplier at full steering lock.")]
-        [Range(0.1f, 1f)] public float turningSpeedFactor = 0.75f;
-        public float turnRateDegPerSec = 130f;
-        [Tooltip("Angle between heading and stick direction at which steering is at full lock.")]
-        public float steerFullAngle = 35f;
-        [Tooltip("Turn rate reaches 100% at this speed. Below it, it blends down to minTurnFactor.")]
-        public float fullTurnSpeed = 4f;
+        [Tooltip("Speed multiplier at full steering lock. Higher = less slowing in turns.")]
+        [Range(0.1f, 1f)] public float turningSpeedFactor = 0.85f;
+        [Tooltip("Turn rate at full lock, degrees per second. Higher = sharper, more responsive steering.")]
+        public float turnRateDegPerSec = 155f;
+        [Tooltip("Angle between heading and stick direction at which steering is at full lock. Lower = snappier response " +
+                 "to small stick changes.")]
+        public float steerFullAngle = 25f;
+        [Tooltip("Turn rate reaches 100% at this speed. Below it, it blends down to minTurnFactor. Lower = full steering " +
+                 "sooner at low speed.")]
+        public float fullTurnSpeed = 2.5f;
         [Tooltip("Turn rate fraction when almost stopped (lets you steer away from a wall).")]
-        [Range(0f, 1f)] public float minTurnFactor = 0.5f;
+        [Range(0f, 1f)] public float minTurnFactor = 0.7f;
         [Tooltip("Fraction of speed kept after a head-on hit. Glancing hits keep proportionally more.")]
-        [Range(0f, 1f)] public float collisionSpeedKeep = 0.3f;
+        [Range(0f, 1f)] public float collisionSpeedKeep = 0.6f;
+        [Tooltip("Fraction of yaw spin from collisions kept per physics step. 0 = a hit never turns the car (no sideways " +
+                 "bounce, no skid); steering is applied separately.")]
+        [Range(0f, 1f)] public float collisionSpinKeep = 0f;
         public float stoppedSpeedThreshold = 0.25f;
+
+        [Header("Car lights (unlit plates, no real-time light)")]
+        public Color headlightOn = new Color(1f, 0.97f, 0.8f);
+        public Color headlightOff = new Color(0.55f, 0.55f, 0.5f);
+        public Color brakeLightOn = new Color(1f, 0.05f, 0.05f);
+        public Color brakeLightOff = new Color(0.4f, 0.05f, 0.05f);
+        public Color reverseLightOn = Color.white;
+        public Color reverseLightOff = new Color(0.25f, 0.25f, 0.25f);
 
         [Header("Camera")]
         [Tooltip("Camera offset from the player on foot (yaw stays 0, the pitch follows the offset direction).")]
