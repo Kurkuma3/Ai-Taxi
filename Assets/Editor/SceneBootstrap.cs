@@ -143,6 +143,10 @@ namespace Taxi.EditorTools
             Set(fsm, "cameraRig", rig);
             Set(fsm, "hud", hud);
 
+            // ---- Trips: zones, wallet, passengers, route hint, fare/money HUD -------
+            PassengerAssets.Setup();
+            TripSystemSetup.Setup();
+
             // ---- Save & project settings ------------------------------------------
             EditorSceneManager.SaveScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene(), ScenePath);
             EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(ScenePath, true) };

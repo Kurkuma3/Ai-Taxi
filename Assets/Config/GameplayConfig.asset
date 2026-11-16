@@ -17,6 +17,7 @@ MonoBehaviour:
   brakeDeceleration: 18
   turningSpeedFactor: 0.75
   turnRateDegPerSec: 130
+  steerFullAngle: 35
   fullTurnSpeed: 4
   minTurnFactor: 0.5
   collisionSpeedKeep: 0.3
@@ -25,12 +26,42 @@ MonoBehaviour:
   reverseExitAngle: 80
   reverseEnterSpeed: 1.5
   reverseMaxSpeed: 5
-  walkSpeed: 4
-  playerTurnRateDegPerSec: 540
   stickRadiusScreenFraction: 0.07
   stickDeadzone: 0.25
+  walkSpeed: 4
+  playerTurnRateDegPerSec: 540
+  walkAnimSpeedMultiplier: 1.2
+  walkAnimDampTime: 0.08
   enterRadius: 2.4
   enterHoldTime: 1
   enterExitTransition: 0.25
   exitHoldRadiusScreenFraction: 0.1
   exitLocalOffset: {x: -1.8, y: 0, z: 0}
+  exitSearchRadius: 4.5
+  baseFare: 10
+  farePerMeter: 0.15
+  zoneFareMultipliers:
+  - 1
+  - 1.2
+  - 1.4
+  - 1.7
+  tripDistanceByHighestZone:
+  - {x: 40, y: 70}
+  - {x: 60, y: 115}
+  - {x: 80, y: 190}
+  - {x: 100, y: 210}
+  fallbackPairChoices: 3
+  newZoneTripChance: 0.5
+  newZonePriorityTrips: 4
+  stopRadius: 7
+  waveDistance: 30
+  passengerWalkSpeed: 2.5
+  passengerWalkMaxTime: 1.5
+  nextTripDelay: 1
+  fareLabelHeight: 2.4
+  moneyCountUpTime: 0.8
+  coinsPerPayment: 8
+  coinFlightTime: 0.55
+  coinStagger: 0.05
+  routeArrowRadius: 3.6
+  routeArrowHideDistance: 9

@@ -55,5 +55,53 @@ namespace Taxi
         public Vector3 exitLocalOffset = new Vector3(-1.8f, 0f, 0f);
         [Tooltip("If both sides of the car are blocked, search for a free spot on the road up to this distance from the car.")]
         public float exitSearchRadius = 4.5f;
+
+        [Header("Fares")]
+        public float baseFare = 10f;
+        [Tooltip("Dollars per metre of straight-line distance between the pickup and the drop-off stop.")]
+        public float farePerMeter = 0.15f;
+        [Tooltip("Fare multiplier per zone (element 0 = Zone 1). A trip uses the larger of its two zones.")]
+        public float[] zoneFareMultipliers = { 1.0f, 1.2f, 1.4f, 1.7f };
+
+        [Header("Trip length (straight line, metres)")]
+        [Tooltip("Min/max trip distance by the highest open zone (element 0 = only Zone 1 open). Fitted to the current map: " +
+                 "the longest stop pair is 68 m in Zone 1 and 209 m over the whole city.")]
+        public Vector2[] tripDistanceByHighestZone =
+        {
+            new Vector2(40f, 70f), new Vector2(60f, 115f), new Vector2(80f, 190f), new Vector2(100f, 210f)
+        };
+        [Tooltip("If no pair of stops fits the range, pick at random among this many pairs closest to it " +
+                 "(1 = always the single closest, which repeats the same route).")]
+        [Range(1, 8)] public int fallbackPairChoices = 3;
+        [Tooltip("After a zone opens, this share of new trips starts or ends in it.")]
+        [Range(0f, 1f)] public float newZoneTripChance = 0.5f;
+        [Tooltip("How many trips after a zone opens the new-zone preference lasts.")]
+        public int newZonePriorityTrips = 4;
+
+        [Header("Passenger")]
+        [Tooltip("The car must stop with its centre within this distance of the stop marker to pick up / drop off.")]
+        public float stopRadius = 7f;
+        [Tooltip("The waiting passenger waves while the car is within this distance.")]
+        public float waveDistance = 30f;
+        public float passengerWalkSpeed = 2.5f;
+        [Tooltip("Boarding / getting out never takes longer than this; the passenger snaps to the end point.")]
+        public float passengerWalkMaxTime = 1.5f;
+        [Tooltip("Pause between a paid trip and the next passenger appearing.")]
+        public float nextTripDelay = 1.0f;
+        [Tooltip("Fare label height above the passenger's feet, metres.")]
+        public float fareLabelHeight = 2.4f;
+
+        [Header("Payment")]
+        public float moneyCountUpTime = 0.8f;
+        public int coinsPerPayment = 8;
+        public float coinFlightTime = 0.55f;
+        [Tooltip("Delay between consecutive coins, seconds.")]
+        public float coinStagger = 0.05f;
+
+        [Header("Route hint")]
+        [Tooltip("Distance from the car (or the player on foot) at which the ground arrow circles.")]
+        public float routeArrowRadius = 3.6f;
+        [Tooltip("The arrow hides when the target is closer than this.")]
+        public float routeArrowHideDistance = 9f;
     }
 }

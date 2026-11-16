@@ -130,8 +130,63 @@ Neither has the driver's yellow cap or vest.
 
 Verify: run **Taxi > Setup Passengers**, console clean; drag a passenger prefab into a scene, open the Animator window in Play Mode and toggle `Wave`. In Blender open `ArtSource/Passengers.blend` and play the `Wave` NLA track. What was checked: tri counts in Unity (752 / 784 / 104), all three clips import on both FBX files, the Wave clip from Passenger_A moves the left arm of a Passenger_B instance (shared controller binds). Play Mode was not run.
 
+## 11. Trips: passengers, fares by zone, cross-zone trips, payment, route hint
+
+Files: `Assets/Scripts/Trips/` (`TripPlanner`, `TripManager`, `ZoneProgress`, `Wallet`, `Passenger`, `RouteHint`), additions to `Hud` and `PassengerStop`, editor `Assets/Editor/TripSystemSetup.cs`. All numbers are in `GameplayConfig` (headers Fares, Trip length, Passenger, Payment, Route hint).
+
+**Zones.** `ZoneProgress` keeps which zones are open (Zone 1 from the start) and `HighestOpen`. `Open(z)` makes z the *new zone* for the next `newZonePriorityTrips` (4) planned trips. Buying zones at barriers is the next task. For now, in the editor only, keys **1–4** open a zone and hide its barriers. A debug shortcut: the Z3/Z4 barrier rule is not applied there.
+
+**Stop zones.** `PassengerStop.ResolvedZone` takes the zone from the `zone` field. If the field is 0, it uses the nearest parent named `Zone N` or `ZN`. Stops without a zone are ignored with a warning. Menu **Taxi > Validate Passenger Stops** counts the stops per zone (current scene: Z1 = 3, Z2 = 8, Z3 = 7, Z4 = 11, none missing).
+
+**Fare.** `round_half_up((baseFare + farePerMeter × metres) × max(mult[from], mult[to]))`, with $10 + $0.15/m and multipliers ×1.0 / 1.2 / 1.4 / 1.7. Metres are the straight line between the two stop markers. The label above the passenger shows this final number.
+
+**Trip selection** (`TripPlanner.TryPlan`, pure logic):
+1. Only ordered pairs whose two stops are in open zones are candidates. A closed zone is never a pickup or a destination.
+2. While a new zone has priority, with probability `newZoneTripChance` (0.5) the pair must start or end in it.
+3. A random pair inside the distance range of the highest open zone is chosen.
+4. If no pair is inside the range, a random one of the `fallbackPairChoices` (3) pairs closest to the range is chosen. The brief said "the longest one", but that repeats a single route forever, so this was changed with the author's approval.
+5. The last drop-off stop is avoided as the next pickup when another option exists.
+6. Each later pass relaxes one rule, so the planner returns a trip whenever two usable stops exist.
+
+A `Trip` is an immutable snapshot, so a zone opening mid-ride does not change the current trip.
+
+**Distance ranges.** The brief's 80–150 / 150–250 / 200–300 / 250–350 m do not fit this map: the longest stop pair is 68 m inside Zone 1 and 209 m over the whole city, so every trip fell back to one pair. With the author's approval the defaults were fitted to the map: **40–70 / 60–115 / 80–190 / 100–210 m**. Planner run on the real 29 stops (2000 trips per stage, editor script, not Play Mode):
+
+| Open up to | In range | Distance | Fare | Distinct pairs | Same route as previous |
+|---|---|---|---|---|---|
+| Z1 | 100% | 43–68 m | $16–20 | 3 | 50% (only 3 stops in Z1) |
+| Z2 | 100% | 61–115 m | $20–33 | 42 | 3% |
+| Z3 | 100% | 80–176 m | $27–51 | 132 | 1% |
+| Z4 | 100% | 100–209 m | $32–70 | 360 | 0% |
+
+With the new-zone priority on, 91% of trips touch a newly opened Z3 and 87% touch a newly opened Z4. Z2 shows 98% even without priority, because Z1 has only 3 stops.
+
+**Trip state machine** (`TripManager`, one passenger at a time):
+- `NoTrip` → after `nextTripDelay`, plan a trip → `Waiting`.
+- `Waiting`: the passenger (Passenger_A or B at random) stands on the pickup stop facing the car, with the fare pill above its head. It waves while the car is within `waveDistance` and the player is driving. When the car is stopped within `stopRadius` with the driver inside → `Boarding`.
+- `Boarding`: the passenger walks to the nearest door, at most `passengerWalkMaxTime`, then → `Riding`. If the car drives away it goes back to `Waiting`, and the passenger walks back to the stop.
+- `Riding`: the route hint points to the drop-off. When the car is stopped within `stopRadius` (driver inside or not) → `Alighting`.
+- `Alighting`: payment happens at once (wallet + coins), then the passenger walks to the stop, time-limited → `NoTrip`.
+
+No state waits for something the player cannot do.
+
+**Payment.** `Wallet.Add` raises `Earned`. `Hud.PlayPayment` flies `coinsPerPayment` pooled coin images from the passenger to the top counter along small arcs (staggered). Each landing plays a procedural "ding" (two sines, pitch rising per coin) and punches the counter scale. The counter counts up over `moneyCountUpTime`, starting when the first coin lands. The money string is rebuilt only when the shown value changes.
+
+**Route hint.** `RouteHint` builds an arrow, a ring and a beam mesh in Awake. They use one URP Unlit material (`Assets/Art/Materials/RouteHint.mat`), tinted through a MaterialPropertyBlock: green for pickup, amber for drop-off. The arrow circles the car (or the player on foot) at `routeArrowRadius` and points straight at the target. It hides closer than `routeArrowHideDistance`. The ring pulses on the target stop.
+
+**Scene.** `TripSystemSetup` (menu **Taxi > Setup Trip System**) adds the components, the RouteHint object and the HUD elements to the open scene. It does not rebuild the scene, so hand edits survive, and it is idempotent. `SceneBootstrap` calls it as well.
+
+**Tests.** `Assets/Tests/EditMode/TripPlannerTests.cs` covers the fare formula, closed zones, in-range picks, both fallback modes, the new-zone share, pickup avoidance and stop zone parsing. Written but **not run** yet (Window > General > Test Runner > EditMode).
+
+Verify:
+- In Play Mode, get in the car: a passenger appears with a green arrow and ring, and waves as you approach. Stop next to the passenger: they walk to the door. The arrow turns amber. Stop at the amber ring: coins fly to the counter with a ding.
+- Press 2 in the editor: Zone 2 opens, its barriers disappear, and most of the next 4 trips involve Zone 2.
+
+Known: Zone 1 has only 3 stops, so its trips repeat (a map change, the author's call).
+
 ## Change log
 
+- 2026-11-16 — Trip loop: one passenger at a time (wait, board, ride, alight, pay), fare by zone multiplier, cross-zone trips between open zones, distance range by highest open zone (fitted to the map), new-zone priority, coins + count-up + procedural ding, route arrow and target ring; `Taxi > Setup Trip System`, `Taxi > Validate Passenger Stops`; editor keys 1–4 open zones.
 - 2026-11-15 — Passenger_A (office) and Passenger_B (tourist) models on the driver rig with a new Wave clip, suitcase prop with HandlePoint, shared palette material, Passenger controller and prefabs (`PassengerAssets`, menu Taxi > Setup Passengers).
 - 2026-11-13 — Automatic reverse when the stick points behind the car (config: `reverseEnterAngle`, `reverseExitAngle`, `reverseEnterSpeed`, `reverseMaxSpeed`); amber stick knob while reversing.
 - 2026-11-15 — Greybox city built from `docs/city_sketch.png` via `CityLayout` + `CityBuilder`: 22 road polylines, 2 turnarounds, 26 buildings, 29 passenger stops, 9 zone barriers, invisible walls; arena removed; spawns on the parking lot. Checked: 789 car-sized overlap samples along all road axes hit nothing; all 9 barriers have colliders; in Play Mode a coasting car (10–12 m/s) stops at the south and west barriers and runs the Z1 south road freely.
