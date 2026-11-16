@@ -17,8 +17,9 @@ namespace Taxi
     ///                or, with luggage -> AwaitLuggage
     ///   AwaitLuggage passenger waits; player carries the suitcase from the trunk to the drop point -> paid -> Searching
     /// Luggage orders: the suitcase stands next to the passenger. Picking it up commits the player to that order
-    /// (the other orders' arrows hide, only it can board): the passenger walks to the car door and gets in at once,
-    /// and the player puts the suitcase into the trunk during Riding. While carrying, the player cannot get into the car.
+    /// (the other orders' arrows hide, only it can board): the passenger walks to the car door and waits; once the
+    /// suitcase is in the trunk they get in. At the drop-off the passenger steps out and waits beside the car; the player
+    /// carries the suitcase from the trunk to them and is paid. While carrying, the player cannot get into the car.
     /// Opening a zone re-plans every waiting order: same passenger and stop, new destination and fare.
     /// Trips in progress are snapshots. No state waits on something the player
     /// cannot do (walks are time-limited, waiting passengers never leave).
@@ -89,7 +90,8 @@ namespace Taxi
         int leavingStop = -1;
 
         float luggageProgress;
-        Vector3 dropPoint;
+        Vector3 dropPoint;    // where the suitcase is put down at the drop-off: next to the passenger
+        Vector3 standPoint;   // where the passenger waits after getting out: beside the car, clear of the body
         float timer;
 
         readonly List<PassengerStop> stops = new List<PassengerStop>(32);
@@ -216,14 +218,6 @@ namespace Taxi
                 case State.Riding:
                 {
                     Vector3 stop = DropoffPos;
-                    if (ride.luggage == Luggage.Carried)
-                    {
-                        // The passenger got in while the suitcase was still in hand: into the trunk first
-                        // (getting into the car is blocked while carrying, so the ride cannot start without it).
-                        routeHint.Show(hintFrom, TrunkPoint, SlotColor(ride.slot));
-                        if (onFoot && Interact(TrunkPoint, dt)) StoreInTrunk(ride);
-                        break;
-                    }
                     routeHint.Show(hintFrom, stop, true);
                     if (car.IsStopped && Flat(carPos, stop) <= config.stopRadius) Enter(State.Alighting);
                     break;
@@ -231,7 +225,7 @@ namespace Taxi
 
                 case State.Alighting:
                     timer += dt;
-                    if (ride.passenger.WalkTowards(DropoffPos, dt) || timer >= config.passengerWalkMaxTime)
+                    if (ride.passenger.WalkTowards(standPoint, dt) || timer >= config.passengerWalkMaxTime)
                     {
                         if (ride.trip.luggage) { Enter(State.AwaitLuggage); break; }
                         FinishRide();
@@ -426,20 +420,20 @@ namespace Taxi
                 Vector3 stop = StopPos(o.trip.pickup);
                 float d = Flat(carPos, stop);
                 Color c = SlotColor(o.slot);
-                // Suitcase in hand and the passenger has reached the door: they get in right away; the player loads
-                // the trunk afterwards (Riding). Car too far from the stop: they wait there and board normally later.
+                if (o.luggage == Luggage.Carried)
+                {
+                    routeHint.Show(hintFrom, TrunkPoint, c);
+                    if (onFoot && Interact(TrunkPoint, dt)) StoreInTrunk(o);
+                    return;
+                }
+                // Suitcase in the trunk and the passenger waiting at the door (car at the stop): they get in now,
+                // whether the driver is already inside or not. Car too far from the stop: they board normally later.
                 bool nearCar = d <= config.stopRadius + config.passengerFollowExtra;
                 Vector3 pp = o.passenger.transform.position;
                 if (nearCar && Flat(pp, DoorPoint(pp)) <= 0.1f)
                 {
                     boardingSlot = committedSlot;
                     StartRide();
-                    return;
-                }
-                if (o.luggage == Luggage.Carried)
-                {
-                    routeHint.Show(hintFrom, TrunkPoint, c);
-                    if (onFoot && Interact(TrunkPoint, dt)) StoreInTrunk(o);
                     return;
                 }
                 routeHint.Show(hintFrom, stop, c);
@@ -639,9 +633,22 @@ namespace Taxi
 
                 case State.Alighting:
                 {
+                    // The car parks on the stop, so the passenger steps out of the door on the stop's side and walks a
+                    // little away from the car (standPoint). With luggage the suitcase goes right next to them (dropPoint),
+                    // never to the car.
                     Vector3 door = DoorPoint(DropoffPos);
+                    Vector3 side = door - car.transform.position;
+                    side.y = 0f;
+                    side = side.sqrMagnitude > 0.01f ? side.normalized : car.transform.right;
+                    Vector3 fwd = car.transform.forward;
+                    fwd.y = 0f;
+                    fwd.Normalize();
+                    standPoint = door + side * config.passengerStandOffset;
+                    standPoint.y = door.y;
+                    dropPoint = standPoint + fwd * config.luggageDropDistance;
+                    dropPoint.y = 0f;
                     ride.passenger.SetVisible(true);
-                    ride.passenger.PlaceAt(door, car.transform.eulerAngles.y);
+                    ride.passenger.PlaceAt(door, Mathf.Atan2(side.x, side.z) * Mathf.Rad2Deg);
                     routeHint.Hide();
                     if (ride.trip.luggage) break;   // paid when the suitcase is delivered (AwaitLuggage)
                     lastDropoff = ride.trip.dropoff;
@@ -651,15 +658,7 @@ namespace Taxi
                 }
 
                 case State.AwaitLuggage:
-                {
-                    // Drop point: next to the passenger, toward where the car stopped.
-                    Vector3 toCar = car.transform.position - DropoffPos;
-                    toCar.y = 0f;
-                    Vector3 dir = toCar.sqrMagnitude > 0.01f ? toCar.normalized : stops[ride.trip.dropoff].transform.right;
-                    dropPoint = DropoffPos + dir * config.luggageDropDistance;
-                    dropPoint.y = 0f;
-                    break;
-                }
+                    break;   // dropPoint was set next to the passenger's standPoint when they got out
             }
         }
 

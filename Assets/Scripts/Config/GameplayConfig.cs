@@ -119,6 +119,8 @@ namespace Taxi
         public Vector3 carryLocalOffset = new Vector3(0.42f, 0.14f, 0.05f);
         [Tooltip("At the drop-off the suitcase goes to a point this far from the passenger, toward the car.")]
         public float luggageDropDistance = 1.2f;
+        [Tooltip("After getting out, the passenger walks this far from the door, away from the car, and waits there.")]
+        public float passengerStandOffset = 1.6f;
         [Tooltip("Once the suitcase is picked up the passenger walks to the car door, if the car is within " +
                  "stopRadius + this of the stop (farther: they keep waiting at the stop).")]
         public float passengerFollowExtra = 3f;
