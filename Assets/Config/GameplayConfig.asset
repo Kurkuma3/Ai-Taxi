@@ -33,6 +33,8 @@ MonoBehaviour:
   tiltPitchFactor: 0.3
   tiltPitchMax: 3.5
   tiltResponse: 8
+  sparksMin: 6
+  sparksMax: 28
   skidMinSpeed: 8
   skidSteer: 0.85
   skidBrakeMinSpeed: 9

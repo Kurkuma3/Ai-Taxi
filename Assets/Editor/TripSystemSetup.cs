@@ -67,6 +67,11 @@ namespace Taxi.EditorTools
             Set(skid, "config", cfg);
             Set(skid, "material", SkidMaterial());
 
+            // ---- Hit sparks (one world-space particle system, burst on bumps) ----
+            var sparks = GetOrAdd<HitSparks>(car.gameObject);
+            Set(sparks, "config", cfg);
+            Set(sparks, "material", SkidMaterial());
+
             // ---- Body tilt (visual roll / pitch of the body parts) ----
             var tilt = GetOrAdd<CarBodyTilt>(car.gameObject);
             Set(tilt, "config", cfg);

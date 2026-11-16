@@ -51,6 +51,12 @@ namespace Taxi
         [Tooltip("How fast the body follows (exponential rate, 1/s). Lower = softer suspension.")]
         public float tiltResponse = 8f;
 
+        [Header("Hit sparks")]
+        [Tooltip("Particles at the weakest counted bump (bumpMinImpactSpeed).")]
+        public int sparksMin = 6;
+        [Tooltip("Particles at a full-strength hit (cameraShakeFullImpact).")]
+        public int sparksMax = 28;
+
         [Header("Skid marks")]
         [Tooltip("Hard turn: marks appear from this speed (m/s) ...")]
         public float skidMinSpeed = 8f;

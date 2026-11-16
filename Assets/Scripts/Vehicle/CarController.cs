@@ -21,6 +21,9 @@ namespace Taxi
         public bool InputEnabled { get; set; }
         /// <summary>A real hit (impact speed into the obstacle at least bumpMinImpactSpeed); the argument is that speed.</summary>
         public event System.Action<float> Bumped;
+        /// <summary>Contact point and flat outward normal (from the obstacle toward the car) of the last bump.</summary>
+        public Vector3 LastBumpPoint { get; private set; }
+        public Vector3 LastBumpNormal { get; private set; }
         /// <summary>Signed: positive forward, negative while backing up.</summary>
         public float Speed { get; private set; }
         public bool HasInput { get; private set; }
@@ -127,7 +130,12 @@ namespace Taxi
             float headOn = n.sqrMagnitude > 1e-4f ? Mathf.Clamp01(Vector3.Dot(moveDir, -n.normalized)) : 1f;
             float impact = Mathf.Abs(Speed) * headOn;   // speed into the obstacle
             Speed *= Mathf.Lerp(1f, config.collisionSpeedKeep, headOn);
-            if (impact >= config.bumpMinImpactSpeed) Bumped?.Invoke(impact);
+            if (impact >= config.bumpMinImpactSpeed)
+            {
+                LastBumpPoint = c.GetContact(0).point;
+                LastBumpNormal = n.sqrMagnitude > 1e-4f ? n.normalized : -moveDir;
+                Bumped?.Invoke(impact);
+            }
         }
     }
 }
