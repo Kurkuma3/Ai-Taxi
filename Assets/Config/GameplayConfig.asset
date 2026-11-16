@@ -62,6 +62,7 @@ MonoBehaviour:
   trunkOffset: 2.7
   carryLocalOffset: {x: 0.42, y: 0.14, z: 0.05}
   luggageDropDistance: 1.2
+  passengerFollowExtra: 3
   stopRadius: 7
   waveDistance: 30
   passengerWalkSpeed: 2.5

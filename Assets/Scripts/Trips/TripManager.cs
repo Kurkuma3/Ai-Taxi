@@ -137,8 +137,14 @@ namespace Taxi
                 {
                     Vector3 stop = PickupPos;
                     float d = Flat(carPos, stop);
-                    // Back from an aborted boarding: walk to the stop first, then wait facing the car.
-                    if (Flat(passenger.transform.position, stop) > 0.05f) passenger.WalkTowards(stop, dt);
+                    // Luggage picked up (carried or already in the trunk) and the car is at this stop: the passenger
+                    // heads for the car door right away and waits there. Otherwise they wait at the stop (also after
+                    // an aborted boarding or when the car drives off).
+                    bool goToCar = CurrentTrip.luggage && LuggageState != Luggage.AtStop
+                                   && d <= config.stopRadius + config.passengerFollowExtra;
+                    Vector3 waitAt = goToCar ? DoorPoint(passenger.transform.position) : stop;
+                    if (Flat(passenger.transform.position, waitAt) > 0.05f) passenger.WalkTowards(waitAt, dt);
+                    else if (goToCar) passenger.TurnTowards(carPos, dt);
                     else
                     {
                         bool wave = driving && d <= config.waveDistance;
