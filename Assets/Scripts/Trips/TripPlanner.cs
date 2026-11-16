@@ -20,6 +20,9 @@ namespace Taxi
             this.distance = distance; this.fare = fare; this.luggage = luggage;
         }
 
+        /// <summary>Same trip with another fare (re-priced after a Fare Meter upgrade).</summary>
+        public Trip WithFare(int newFare) => new Trip(pickup, dropoff, fromZone, toZone, distance, newFare, luggage);
+
         /// <summary>Same trip with a suitcase; the bonus is added to the fare shown above the passenger.</summary>
         public Trip WithLuggage(int bonus) => new Trip(pickup, dropoff, fromZone, toZone, distance, fare + bonus, true);
     }
@@ -41,6 +44,7 @@ namespace Taxi
         public Vector2[] distanceByHighest; // [0] = only Zone 1 open
         public float newZoneChance;
         public int fallbackChoices;         // pick among this many pairs closest to the range when none is inside
+        public float fareBonus;             // Fare Meter upgrade: +fraction on the fare (0 = none), set at plan time
 
         public static TripRules From(GameplayConfig c) => new TripRules
         {
@@ -70,10 +74,12 @@ namespace Taxi
     /// </summary>
     public static class TripPlanner
     {
-        /// <summary>(base + perMeter * metres) * the larger multiplier of the two zones, rounded to whole dollars.</summary>
+        /// <summary>
+        /// (base + perMeter * metres) * the larger multiplier of the two zones * (1 + fareBonus), rounded to whole dollars.
+        /// </summary>
         public static int Fare(in TripRules r, float metres, int fromZone, int toZone)
         {
-            float mult = Mathf.Max(r.Multiplier(fromZone), r.Multiplier(toZone));
+            float mult = Mathf.Max(r.Multiplier(fromZone), r.Multiplier(toZone)) * (1f + r.fareBonus);
             // Half rounds up (RoundToInt would round 42.5 to 42).
             return Mathf.Max(1, Mathf.FloorToInt((r.baseFare + r.farePerMeter * metres) * mult + 0.5f));
         }

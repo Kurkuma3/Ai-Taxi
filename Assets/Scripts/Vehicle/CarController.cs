@@ -15,6 +15,8 @@ namespace Taxi
     public class CarController : MonoBehaviour
     {
         [SerializeField] GameplayConfig config;
+        [Tooltip("Engine and Steering upgrades scale acceleration and turn rate. Optional.")]
+        [SerializeField] Upgrades upgrades;
 
         public bool InputEnabled { get; set; }
         /// <summary>Signed: positive forward, negative while backing up.</summary>
@@ -83,13 +85,15 @@ namespace Taxi
             // Accelerate only when target and current speed agree in direction and the target is further out;
             // changing direction or slowing down always uses the brake rate.
             bool speedingUp = targetSpeed * Speed >= 0f && Mathf.Abs(targetSpeed) > Mathf.Abs(Speed);
-            float rate = speedingUp ? config.acceleration : config.brakeDeceleration;
+            float rate = speedingUp ? config.acceleration * (upgrades != null ? upgrades.AccelerationMultiplier : 1f)
+                                    : config.brakeDeceleration;
             Speed = Mathf.MoveTowards(Speed, targetSpeed, rate * dt);
 
             if (steer != 0f && HasInput)
             {
                 float k = Mathf.Lerp(config.minTurnFactor, 1f, Mathf.Clamp01(Mathf.Abs(Speed) / config.fullTurnSpeed));
-                rb.MoveRotation(rb.rotation * Quaternion.Euler(0f, steer * config.turnRateDegPerSec * k * dt, 0f));
+                float turnRate = config.turnRateDegPerSec * (upgrades != null ? upgrades.TurnMultiplier : 1f);
+                rb.MoveRotation(rb.rotation * Quaternion.Euler(0f, steer * turnRate * k * dt, 0f));
             }
 
             Vector3 v = transform.forward * Speed;

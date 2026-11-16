@@ -187,6 +187,24 @@ namespace Taxi
         [Tooltip("Barrier pop-out animation length, seconds.")]
         public float barrierVanishTime = 0.45f;
 
+        [Header("Upgrades (garage pads)")]
+        [Tooltip("Engine: acceleration bonus per level (0.15 = +15%).")]
+        public float engineAccelPerLevel = 0.15f;
+        [Tooltip("Engine price per level; the array length is the max level.")]
+        public int[] enginePrices = { 80, 160 };
+        [Tooltip("Steering: turn rate bonus per level (0.15 = +15%).")]
+        public float steeringTurnPerLevel = 0.15f;
+        public int[] steeringPrices = { 80, 160 };
+        [Tooltip("Fare Meter: fare bonus per level (0.10 = +10%), applied before the luggage bonus.")]
+        public float fareMeterPerLevel = 0.10f;
+        public int[] fareMeterPrices = { 120, 240 };
+        [Tooltip("Stand within this distance of a pad's centre (on foot) to buy.")]
+        public float upgradePadRadius = 1.4f;
+        [Tooltip("Seconds standing on the pad for the ring to fill.")]
+        public float upgradeBuyTime = 0.8f;
+        [Tooltip("Sign blink rate (per second) when the player cannot afford the next level.")]
+        public float upgradeBlinkRate = 5f;
+
         [Header("Route hint")]
         [Tooltip("Distance from the car (or the player on foot) at which the ground arrow circles.")]
         public float routeArrowRadius = 3.6f;

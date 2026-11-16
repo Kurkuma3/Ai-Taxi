@@ -171,12 +171,13 @@ namespace Taxi.EditorTools
             return 0;
         }
 
-        [MenuItem("Taxi/Reset Save (open zones)")]
+        [MenuItem("Taxi/Reset Save (zones, upgrades)")]
         public static void ResetSave()
         {
             PlayerPrefs.DeleteKey(ZoneProgress.SaveKey);
+            for (int i = 0; i < Upgrades.Count; i++) PlayerPrefs.DeleteKey(Upgrades.Key((UpgradeType)i));
             PlayerPrefs.Save();
-            Debug.Log("[Taxi] Save reset: only Zone 1 is open on the next Play");
+            Debug.Log("[Taxi] Save reset: only Zone 1 is open and all upgrades are at level 0 on the next Play");
         }
 
         [MenuItem("Taxi/Validate Passenger Stops")]

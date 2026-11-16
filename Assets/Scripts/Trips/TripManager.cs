@@ -38,6 +38,8 @@ namespace Taxi
         [SerializeField] Wallet wallet;
         [SerializeField] Hud hud;
         [SerializeField] RouteHint routeHint;
+        [Tooltip("Fare Meter upgrade raises fares. Optional.")]
+        [SerializeField] Upgrades upgrades;
         [Tooltip("Passenger model prefabs (Passenger_A, Passenger_B). A random one is used per order.")]
         [SerializeField] GameObject[] passengerPrefabs;
         [Tooltip("Suitcase prop (pivot at the bottom); instances are pooled.")]
@@ -110,6 +112,7 @@ namespace Taxi
         {
             rng = new System.Random(System.Environment.TickCount);
             rules = TripRules.From(config);
+            SyncFareBonus();   // saved Fare Meter level (Upgrades.Awake ran before this Start)
             isZoneOpen = zones.IsOpen;
             CollectStops();
             scratch = new List<int>(stops.Count * stops.Count);
@@ -145,12 +148,14 @@ namespace Taxi
                 suitcasePool[i].gameObject.SetActive(false);
             }
             zones.ZoneOpened += OnZoneOpened;
+            if (upgrades != null) upgrades.Changed += OnUpgradeChanged;
             Enter(State.Searching);
         }
 
         void OnDestroy()
         {
             if (zones != null) zones.ZoneOpened -= OnZoneOpened;
+            if (upgrades != null) upgrades.Changed -= OnUpgradeChanged;
         }
 
         void CollectStops()
@@ -360,6 +365,25 @@ namespace Taxi
                 hud.PulseOrder(i);
             }
         }
+
+        /// <summary>Fare Meter bought: waiting orders show the new fare at once (the ride in progress keeps its fare).</summary>
+        void OnUpgradeChanged(UpgradeType t)
+        {
+            if (t != UpgradeType.FareMeter) return;
+            SyncFareBonus();
+            for (int i = 0; i < orders.Length; i++)
+            {
+                var o = orders[i];
+                if (!o.active) continue;
+                int fare = TripPlanner.Fare(rules, o.trip.distance, o.trip.fromZone, o.trip.toZone)
+                           + (o.trip.luggage ? config.luggageBonus : 0);
+                if (fare == o.trip.fare) continue;
+                o.trip = o.trip.WithFare(fare);
+                hud.PulseOrder(i);
+            }
+        }
+
+        void SyncFareBonus() => rules.fareBonus = upgrades != null ? upgrades.FareBonus : 0f;
 
         void RememberRoute(Trip trip)
         {

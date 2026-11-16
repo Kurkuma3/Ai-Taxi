@@ -141,7 +141,7 @@ Verify: run **Taxi > Setup Passengers**, console clean; drag a passenger prefab 
 
 Files: `Assets/Scripts/Trips/` (`TripPlanner`, `TripManager`, `ZoneProgress`, `Wallet`, `Passenger`, `RouteHint`), additions to `Hud` and `PassengerStop`, editor `Assets/Editor/TripSystemSetup.cs`. All numbers are in `GameplayConfig` (headers Fares, Trip length, Passenger, Payment, Route hint).
 
-**Zones.** `ZoneProgress` keeps which zones are open (Zone 1 from the start) and `HighestOpen`. `Open(z)` makes z the *new zone* for the next `newZonePriorityTrips` (4) planned trips. Open zones are saved (PlayerPrefs bitmask `Taxi.OpenZones`) and restored on launch without the new-zone priority. Menu **Taxi > Reset Save (open zones)** clears it. Money and the tutorial counter are not saved. In the editor only (`#if UNITY_EDITOR`, absent from builds), keys **1–4** open a zone for the current session only; they are **not saved**, so they never hide barriers on the next Play. When a saved mask other than Zone 1 is restored, the console logs it once at start.
+**Zones.** `ZoneProgress` keeps which zones are open (Zone 1 from the start) and `HighestOpen`. `Open(z)` makes z the *new zone* for the next `newZonePriorityTrips` (4) planned trips. Open zones are saved (PlayerPrefs bitmask `Taxi.OpenZones`) and restored on launch without the new-zone priority. Menu **Taxi > Reset Save (zones, upgrades)** clears it, together with the upgrade levels. Money and the tutorial counter are not saved. In the editor only (`#if UNITY_EDITOR`, absent from builds), keys **1–4** open a zone for the current session only; they are **not saved**, so they never hide barriers on the next Play. When a saved mask other than Zone 1 is restored, the console logs it once at start.
 
 **Buying zones** (`BarrierShop`, config header Zones for sale).
 - Each `ZoneBarrier` sits between two zones: `closesZone` (higher), `otherZone` (lower) and `forwardZone` (the one on its +Z side). **Taxi > Setup Trip System** assigns them from the CityLayout zone rectangles 6 m ahead of and behind the barrier, with the park counting as Zone 4. This also fixed the hand-placed copy `Bar_West_Z4 (1)` at (181, 83), which is a Zone 2 / park (Zone 4) barrier, not Zone 1 / Zone 4.
@@ -227,8 +227,29 @@ Verify:
 
 Known: `Stop_Depot` is 31–35 m from Stop_20 and Stop_23 (below the 40 m minimum), so in Zone 1 it only pairs with Stop_26.
 
+## 12. Upgrades at the garage
+
+Files: `Assets/Scripts/Upgrades/` (`Upgrades`, `UpgradePad`, `UpgradeShop`), editor `Assets/Editor/UpgradeSetup.cs` (menu **Taxi > Setup Upgrades**, also called by SceneBootstrap). Config header **Upgrades (garage pads)**.
+
+**Pads.** Three yellow discs in a row on the paved start lot below the garage, between the Stop_Parking and Stop_Depot pockets, right next to the player spawn: Engine (58.6, 31.8), Steering (61.6, 31.8), Fare Meter (64.6, 31.8). Each has a sign on a post behind it (toward the garage, so it never hides the player on the pad), tilted 55° back so it reads from the top-down camera: "Engine" / "Lv1 · $80", or "Engine" / "MAX". There are no colliders. Checked: no collider other than the ground within 1.3 m of any pad, and an editor render from the foot camera shows the signs readable. The first spot (in front of the garage's east half) was moved because two pads sat on the exit road.
+
+**Buying** (`UpgradeShop`, on foot only). Standing within `upgradePadRadius` (1.4 m) of a pad:
+- enough money: the action ring fills over `upgradeBuyTime` (0.8 s), then the price is paid, coins fly from the counter to the pad (`Hud.PlaySpend`), a pop plays (pitch 1.25), the disc and the sign punch, and the sign shows the next level;
+- not enough: an empty ring and the sign blinks red (`upgradeBlinkRate`);
+- max level: nothing, the sign says MAX.
+After a purchase that pad re-arms only once the player steps off, so standing still never buys two levels.
+
+**Effects** (`Upgrades`, levels saved per upgrade in PlayerPrefs `Taxi.Upgrade.<Name>`, max level = price array length):
+- Engine: acceleration × (1 + `engineAccelPerLevel` × level), +15% per level, $80 / $160. Braking is unchanged.
+- Steering: turn rate × (1 + `steeringTurnPerLevel` × level), +15% per level, $80 / $160.
+- Fare Meter: fare × (1 + `fareMeterPerLevel` × level), +10% per level, $120 / $240. It applies in `TripPlanner.Fare` (`TripRules.fareBonus`) before rounding and before the luggage bonus. Buying it re-prices the waiting orders at once (the pill punches). The ride in progress keeps its fare.
+`CarController` and `TripManager` hold an optional `Upgrades` reference (null = no bonus).
+
+Verify: Taxi > Reset Save, Play, get $80 or more, walk onto the Engine pad: the ring fills, $80 flies out, the sign reads "Lv2 · $160", and the car pulls away faster. With less money the sign blinks red. Buy Fare Meter while orders wait: their prices go up and punch. Restart: the levels are kept. Play Mode was not run for this feature.
+
 ## Change log
 
+- 2026-11-16 — Upgrades: three garage pads (Engine +15% acceleration, Steering +15% turn rate, Fare Meter +10% fares; two levels each), ring purchase on foot, red blink when short, MAX sign, saved, cleared by Reset Save; config header Upgrades; `Taxi > Setup Upgrades`.
 - 2026-11-16 — Fix luggage order: at pickup the passenger boards only after the suitcase is in the trunk; at drop-off the passenger waits beside the car (config `passengerStandOffset`) and the suitcase goes to them, not to the car.
 - 2026-11-16 — Camera: separate foot and car offsets (car 30 m high), speed zoom (+8 m at max speed), look-ahead along the direction of travel, smooth blend on getting in/out; config header Camera (the old serialized offset/smoothing on the camera are gone).
 - 2026-11-16 — Orders refresh: the other orders vanish when a passenger boards, a fresh set pops in after the drop-off (config `offerSpawnStagger`); opening a zone re-plans waiting orders (same stop, new destination and fare, pill punch, config `offerPulseTime`); a luggage passenger gets in as soon as the suitcase is picked up, the trunk is loaded during the ride.

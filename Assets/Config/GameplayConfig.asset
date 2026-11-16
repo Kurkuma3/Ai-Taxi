@@ -102,5 +102,14 @@ MonoBehaviour:
   barrierBuyTime: 1
   barrierBlinkRate: 5
   barrierVanishTime: 0.45
+  engineAccelPerLevel: 0.15
+  enginePrices: 50000000a0000000i
+  steeringTurnPerLevel: 0.15
+  steeringPrices: 50000000a0000000i
+  fareMeterPerLevel: 0.1
+  fareMeterPrices: 78000000f0000000i
+  upgradePadRadius: 1.4
+  upgradeBuyTime: 0.8
+  upgradeBlinkRate: 5
   routeArrowRadius: 3.6
   routeArrowHideDistance: 9

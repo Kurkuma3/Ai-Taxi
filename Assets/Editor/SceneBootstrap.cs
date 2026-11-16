@@ -148,6 +148,7 @@ namespace Taxi.EditorTools
             // ---- Trips: zones, wallet, passengers, route hint, fare/money HUD -------
             PassengerAssets.Setup();
             TripSystemSetup.Setup();
+            UpgradeSetup.Setup();
 
             // ---- Save & project settings ------------------------------------------
             EditorSceneManager.SaveScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene(), ScenePath);
