@@ -54,6 +54,7 @@ MonoBehaviour:
   recentRoutesToAvoid: 2
   newZoneTripChance: 0.5
   newZonePriorityTrips: 4
+  tutorialTrips: 2
   stopRadius: 7
   waveDistance: 30
   passengerWalkSpeed: 2.5

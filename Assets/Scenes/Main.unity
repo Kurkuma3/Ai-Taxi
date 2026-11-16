@@ -11522,6 +11522,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 2113597491}
     m_Modifications:
+    - target: {fileID: 1958824641119045159, guid: b26e8c30c6490d44aa47166a7c54378b, type: 3}
+      propertyPath: tutorialMission
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 3347912966799506663, guid: b26e8c30c6490d44aa47166a7c54378b, type: 3}
       propertyPath: m_StaticEditorFlags
       value: 20
@@ -20567,6 +20571,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 2113597491}
     m_Modifications:
+    - target: {fileID: 1958824641119045159, guid: b26e8c30c6490d44aa47166a7c54378b, type: 3}
+      propertyPath: tutorialMission
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 3347912966799506663, guid: b26e8c30c6490d44aa47166a7c54378b, type: 3}
       propertyPath: m_StaticEditorFlags
       value: 20

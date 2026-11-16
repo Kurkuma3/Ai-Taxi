@@ -33,6 +33,9 @@ namespace Taxi
         public State Current { get; private set; }
         public Trip CurrentTrip { get; private set; }
         public bool HasTrip => Current != State.NoTrip;
+        /// <summary>1-based number of the current trip (this session).</summary>
+        public int TripNumber { get; private set; }
+        public bool IsTutorialTrip => TripNumber >= 1 && TripNumber <= config.tutorialTrips;
 
         readonly List<PassengerStop> stops = new List<PassengerStop>(32);
         readonly List<StopInfo> stopInfos = new List<StopInfo>(32);
@@ -164,13 +167,16 @@ namespace Taxi
 
         void PlanNext()
         {
+            int next = TripNumber + 1;
+            int forced = next <= config.tutorialTrips ? TutorialStop(next) : -1;
             if (!TripPlanner.TryPlan(stopInfos, isZoneOpen, zones.HighestOpen, zones.PriorityZone, rules, rng, lastDropoff, scratch, out var trip,
-                    recentRoutes, recentCount))
+                    recentRoutes, recentCount, forced))
             {
                 if (!warnedNoTrip) { Debug.LogWarning("[Taxi] No trip possible (fewer than two stops in open zones)"); warnedNoTrip = true; }
                 timer = 1f;
                 return;
             }
+            TripNumber = next;
             zones.ConsumePriorityTrip();
             if (recentRoutes.Length > 0)
             {
@@ -219,6 +225,13 @@ namespace Taxi
                     break;
                 }
             }
+        }
+
+        /// <summary>Index of the stop marked for tutorial mission n, or -1 (then the trip is planned normally).</summary>
+        int TutorialStop(int mission)
+        {
+            for (int i = 0; i < stops.Count; i++) if (stops[i].tutorialMission == mission) return i;
+            return -1;
         }
 
         Vector3 PickupPos => stops[CurrentTrip.pickup].transform.position;

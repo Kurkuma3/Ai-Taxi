@@ -19,6 +19,8 @@ namespace Taxi
             public string name; public int zone; public Vector2 position; public float yaw;
             [Tooltip("Built but inactive: no passengers, and the curb is closed in front of it.")]
             public bool disabled;
+            [Tooltip("Tutorial mission N (1-based) picks up here; 0 = normal stop.")]
+            public int tutorialMission;
         }
         [Serializable] public class Barrier { public string name; public int closesZone; public Vector2 position; public float yaw; }
         [Serializable] public class Zone { public int id; public string name; public int price; public Rect rect; }

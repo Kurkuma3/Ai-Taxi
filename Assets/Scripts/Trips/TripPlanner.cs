@@ -89,8 +89,9 @@ namespace Taxi
         /// </summary>
         public static bool TryPlan(IReadOnlyList<StopInfo> stops, Func<int, bool> isZoneOpen, int highestOpenZone,
             int priorityZone, in TripRules rules, System.Random rng, int avoidPickup, List<int> scratch, out Trip trip,
-            int[] recentRoutes = null, int recentCount = 0)
+            int[] recentRoutes = null, int recentCount = 0, int forcedPickup = -1)
         {
+            if (forcedPickup >= 0) avoidPickup = -1;   // a forced pickup (tutorial) overrides the soft "not the last drop-off" rule
             trip = default;
             int n = stops.Count;
             bool wantPriority = priorityZone > 0 && rng.NextDouble() < rules.newZoneChance;
@@ -114,6 +115,7 @@ namespace Taxi
                 {
                     int zi = stops[i].zone;
                     if (zi < 1 || !isZoneOpen(zi) || (useAvoid && i == avoidPickup)) continue;
+                    if (forcedPickup >= 0 && i != forcedPickup) continue;
                     for (int j = 0; j < n; j++)
                     {
                         if (j == i) continue;

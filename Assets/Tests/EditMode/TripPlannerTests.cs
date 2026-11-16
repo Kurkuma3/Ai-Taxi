@@ -116,6 +116,20 @@ namespace Taxi.Tests
         }
 
         [Test]
+        public void ForcedPickupIsAlwaysUsed()
+        {
+            var stops = Line();
+            var rng = new System.Random(10);
+            var scratch = new List<int>();
+            for (int k = 0; k < 50; k++)
+            {
+                // forced pickup 1 even though it is also the "avoid" stop
+                Assert.IsTrue(TripPlanner.TryPlan(stops, z => Open(2, z), 2, 0, Rules(), rng, 1, scratch, out var t, null, 0, 1));
+                Assert.AreEqual(1, t.pickup);
+            }
+        }
+
+        [Test]
         public void NewZoneGetsAboutHalfOfTheTrips()
         {
             var stops = Line();

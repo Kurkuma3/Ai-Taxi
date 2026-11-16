@@ -81,6 +81,10 @@ namespace Taxi
         [Tooltip("How many trips after a zone opens the new-zone preference lasts.")]
         public int newZonePriorityTrips = 4;
 
+        [Header("Tutorial")]
+        [Tooltip("The first N trips pick up at the stop marked with PassengerStop.tutorialMission = 1..N (the taxi depot lot).")]
+        public int tutorialTrips = 2;
+
         [Header("Passenger")]
         [Tooltip("The car must stop with its centre within this distance of the stop marker to pick up / drop off.")]
         public float stopRadius = 7f;

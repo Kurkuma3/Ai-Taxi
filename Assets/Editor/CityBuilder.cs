@@ -174,6 +174,7 @@ namespace Taxi.EditorTools
                 go.transform.SetPositionAndRotation(CityLayout.ToWorld(pk.position, PocketY), Quaternion.Euler(0f, pk.yaw, 0f));
                 var stop = go.GetComponentInChildren<PassengerStop>();
                 stop.zone = pk.zone;
+                stop.tutorialMission = pk.tutorialMission;
                 MarkStatic(go);
                 if (pk.disabled) go.SetActive(false);   // curbs (built after this) close inactive pockets
             }

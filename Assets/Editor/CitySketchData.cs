@@ -110,8 +110,9 @@ namespace Taxi.EditorTools
                 // Stop_28 removed (author's request).
                 new CityLayout.Pocket { name = "Stop_29", zone = 2, position = V(139.7f, 14.5f), yaw = 90.0f },
                 // Start area (not in the sketch, added for Zone 1 variety): taxi depot in front of the garage, parking lot.
-                new CityLayout.Pocket { name = "Stop_Depot", zone = 1, position = V(63f, 38.5f), yaw = 90.0f },
-                new CityLayout.Pocket { name = "Stop_Parking", zone = 1, position = V(63f, 26f), yaw = 90.0f },
+                // Tutorial: mission 1 starts on the parking lot, mission 2 (with luggage) at the depot.
+                new CityLayout.Pocket { name = "Stop_Depot", zone = 1, position = V(63f, 38.5f), yaw = 90.0f, tutorialMission = 2 },
+                new CityLayout.Pocket { name = "Stop_Parking", zone = 1, position = V(63f, 26f), yaw = 90.0f, tutorialMission = 1 },
             };
             L.barriers = new[] {
                 new CityLayout.Barrier { name = "Bar_South_Z2", closesZone = 2, position = V(133.0f, 8.0f), yaw = 90.0f },

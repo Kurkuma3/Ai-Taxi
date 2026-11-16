@@ -162,6 +162,8 @@ A `Trip` is an immutable snapshot, so a zone opening mid-ride does not change th
 
 With the new-zone priority on (measured before the depot/parking stops), 91% of trips touched a newly opened Z3 and 87% a newly opened Z4.
 
+**Tutorial missions.** The first `tutorialTrips` (2) trips of a session pick up at the stop whose `PassengerStop.tutorialMission` equals the mission number. Mission 1 starts at `Stop_Parking`, mission 2 at `Stop_Depot`, both on the start lot. The drop-off is planned by the normal rules with the pickup forced (`TripPlanner.TryPlan(..., forcedPickup)`). Planner check on the real stops: mission 1 goes Parking → Stop_20 ($16), mission 2 goes Depot → Stop_26 ($19; the depot's other Z1 pairs are under 40 m). The mission counter is per session (not saved).
+
 **Start money.** `Wallet` starts with `startMoney` ($50); `TripManager` shows it on the counter at start (`Hud.SetMoney`, no animation).
 
 **Trip state machine** (`TripManager`, one passenger at a time):
@@ -189,6 +191,7 @@ Known: `Stop_Depot` is 31–35 m from Stop_20 and Stop_23 (below the 40 m minimu
 
 ## Change log
 
+- 2026-11-16 — Tutorial: the first two trips start on the depot lot (mission 1 Stop_Parking, mission 2 Stop_Depot), `PassengerStop.tutorialMission`, config `tutorialTrips`.
 - 2026-11-16 — Stops: Stop_25 and Stop_27 disabled (unreachable behind a barrier), Stop_28 deleted; curbs rebuilt (376 colliders) so the closed pockets get a curb.
 - 2026-11-16 — Zone 1 variety: `Stop_Depot` and `Stop_Parking` on the start lot; routes are not repeated (last 2, either direction, beats the distance range; config `recentRoutesToAvoid`); wallet starts with $50 (config `startMoney`).
 - 2026-11-16 — Trip loop: one passenger at a time (wait, board, ride, alight, pay), fare by zone multiplier, cross-zone trips between open zones, distance range by highest open zone (fitted to the map), new-zone priority, coins + count-up + procedural ding, route arrow and target ring; `Taxi > Setup Trip System`, `Taxi > Validate Passenger Stops`; editor keys 1–4 open zones.

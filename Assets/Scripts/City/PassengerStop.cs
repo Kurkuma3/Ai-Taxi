@@ -11,6 +11,8 @@ namespace Taxi
     {
         [Tooltip("Zone this stop belongs to (1 = start zone). 0 = take it from a parent named 'Zone N'.")]
         public int zone = 1;
+        [Tooltip("Tutorial mission N (1-based) always picks up here. 0 = a normal stop.")]
+        public int tutorialMission;
 
         /// <summary>Zone from the field or the parent chain; 0 if neither says.</summary>
         public int ResolvedZone
