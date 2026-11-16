@@ -7,7 +7,11 @@ namespace Taxi
     /// <summary>
     /// Minimal HUD: one hold-progress ring over the car (fills both when getting in and when getting out)
     /// and the virtual stick visuals. No buttons: every action is a touch gesture in the world.
+    /// Order markers: one per waiting order, a price pill (with a suitcase icon for luggage) above the passenger's
+    /// head while they are on screen, or pinned to the screen edge with an arrow pointing at them while off screen.
+    /// Runs after the camera (execution order) so world-anchored UI does not lag a frame behind.
     /// </summary>
+    [DefaultExecutionOrder(100)]
     public class Hud : MonoBehaviour
     {
         [SerializeField] Canvas canvas;
@@ -19,7 +23,7 @@ namespace Taxi
         [SerializeField] InputSystemUIInputModule uiInput;
         [Header("Trips")]
         [SerializeField] GameplayConfig config;
-        [SerializeField] RectTransform fareLabel;     // pill above the waiting passenger
+        [SerializeField] RectTransform fareLabel;     // template for the order price pills (stays hidden)
         [SerializeField] Text fareText;
         [SerializeField] RectTransform moneyRoot;     // counter at the top of the screen
         [SerializeField] Text moneyText;
@@ -36,7 +40,23 @@ namespace Taxi
         Coin[] coins;
         int shownMoney, countFrom, countTo;
         float countStart = -1f, punchUntil;
-        int fareShown = -1;
+
+        // Order markers (pill + edge arrow per order slot), requested every frame like the action ring.
+        struct OrderMarker
+        {
+            public RectTransform pill, arrow, icon;
+            public Image bg, arrowImg;
+            public Text text;
+            public int fareShown;
+            public float pulseStart;
+            public bool requested, luggage;
+            public Vector3 head, from;
+            public Color color;
+        }
+        OrderMarker[] orderMarkers;
+        float pillWidth;
+        const float IconRoom = 70f;   // extra pill width (reference px) for the suitcase icon
+        static readonly Color pillTextColor = new Color(0.08f, 0.08f, 0.1f);
         AudioClip coinClip;
         int coinIndexInBurst;
 
@@ -95,7 +115,8 @@ namespace Taxi
         {
             if (config == null || moneyText == null) return;   // scene not set up for trips yet
             moneyText.text = "$0";
-            HideFare();
+            if (fareLabel != null) fareLabel.gameObject.SetActive(false);
+            BuildOrderMarkers();
             int n = Mathf.Clamp(config.coinsPerPayment, 1, 32);
             coins = new Coin[n];
             var disc = UiSprites.Ring(64, 0f);
@@ -109,22 +130,139 @@ namespace Taxi
             coinClip = UiSprites.CoinClip();
         }
 
-        /// <summary>Fare pill above a world point (the waiting passenger's head). Hidden when off-screen.</summary>
-        public void ShowFare(int fare, Vector3 worldPos)
+        void BuildOrderMarkers()
         {
             if (fareLabel == null) return;
-            Vector3 sp = worldCamera.WorldToScreenPoint(worldPos);
-            bool on = sp.z > 0f;
-            if (fareLabel.gameObject.activeSelf != on) fareLabel.gameObject.SetActive(on);
-            if (!on) return;
-            if (fare != fareShown) { fareShown = fare; fareText.text = "$" + fare; }
-            sp.z = 0f;
-            fareLabel.position = sp;
+            int n = Mathf.Max(1, config.offerCount);
+            orderMarkers = new OrderMarker[n];
+            pillWidth = fareLabel.sizeDelta.x;
+            var arrowSprite = UiSprites.Arrow(96);
+            var caseSprite = UiSprites.Suitcase(64);
+            Transform parent = fareLabel.parent;
+            for (int i = 0; i < n; i++)
+            {
+                ref var m = ref orderMarkers[i];
+                var go = Instantiate(fareLabel.gameObject, parent);
+                go.name = "Order" + i;
+                m.pill = (RectTransform)go.transform;
+                m.pill.pivot = new Vector2(0.5f, 0.5f);
+                m.bg = go.GetComponent<Image>();
+                m.text = go.GetComponentInChildren<Text>(true);
+                m.text.color = pillTextColor;
+
+                var icon = new GameObject("Suitcase", typeof(RectTransform), typeof(Image));
+                m.icon = (RectTransform)icon.transform;
+                m.icon.SetParent(m.pill, false);
+                m.icon.anchorMin = m.icon.anchorMax = new Vector2(0f, 0.5f);
+                m.icon.pivot = new Vector2(0f, 0.5f);
+                m.icon.anchoredPosition = new Vector2(14f, 0f);
+                m.icon.sizeDelta = new Vector2(56f, 56f);
+                var iconImg = icon.GetComponent<Image>();
+                iconImg.sprite = caseSprite;
+                iconImg.color = pillTextColor;
+                iconImg.raycastTarget = false;
+
+                var arrow = new GameObject("OrderArrow" + i, typeof(RectTransform), typeof(Image));
+                m.arrow = (RectTransform)arrow.transform;
+                m.arrow.SetParent(parent, false);
+                m.arrow.sizeDelta = Vector2.one * config.offerArrowSize;
+                m.arrowImg = arrow.GetComponent<Image>();
+                m.arrowImg.sprite = arrowSprite;
+                m.arrowImg.raycastTarget = false;
+                arrow.AddComponent<Outline>().effectDistance = new Vector2(3f, -3f);
+
+                m.fareShown = -1;
+                m.luggage = true;   // forces SetLuggage below to lay the pill out
+                SetLuggage(ref m, false);
+                go.SetActive(false);
+                arrow.SetActive(false);
+            }
         }
 
-        public void HideFare()
+        /// <summary>
+        /// Shows the marker of an order slot this frame: price pill over the passenger's head when on screen,
+        /// otherwise pinned to the screen edge (inside the safe band) with an arrow pointing from 'fromWorld' toward them.
+        /// </summary>
+        public void ShowOrder(int slot, int fare, bool luggage, Color color, Vector3 headWorld, Vector3 fromWorld)
         {
-            if (fareLabel != null && fareLabel.gameObject.activeSelf) fareLabel.gameObject.SetActive(false);
+            if (orderMarkers == null || slot < 0 || slot >= orderMarkers.Length) return;
+            ref var m = ref orderMarkers[slot];
+            m.requested = true;
+            m.head = headWorld;
+            m.from = fromWorld;
+            if (fare != m.fareShown) { m.fareShown = fare; m.text.text = "$" + fare; }
+            if (luggage != m.luggage) SetLuggage(ref m, luggage);
+            if (color != m.color) { m.color = color; m.bg.color = color; m.arrowImg.color = color; }
+        }
+
+        /// <summary>Punches an order's pill (its destination and fare just changed).</summary>
+        public void PulseOrder(int slot)
+        {
+            if (orderMarkers == null || slot < 0 || slot >= orderMarkers.Length) return;
+            orderMarkers[slot].pulseStart = Time.unscaledTime;
+        }
+
+        void SetLuggage(ref OrderMarker m, bool on)
+        {
+            m.luggage = on;
+            m.icon.gameObject.SetActive(on);
+            m.pill.sizeDelta = new Vector2(pillWidth + (on ? IconRoom : 0f), m.pill.sizeDelta.y);
+            var t = m.text.rectTransform;
+            t.offsetMin = new Vector2(on ? IconRoom : 0f, 0f);
+            t.offsetMax = Vector2.zero;
+        }
+
+        void LayoutOrderMarkers()
+        {
+            if (orderMarkers == null) return;
+            float sc = canvas.scaleFactor, w = Screen.width, h = Screen.height;
+            float margin = config.offerEdgeMargin * sc;
+            var band = new Rect(margin, h * config.offerEdgeBottom, w - 2f * margin,
+                h * (1f - config.offerEdgeBottom - config.offerEdgeTop));
+            for (int i = 0; i < orderMarkers.Length; i++)
+            {
+                ref var m = ref orderMarkers[i];
+                bool on = m.requested;
+                m.requested = false;
+                if (m.pill.gameObject.activeSelf != on) m.pill.gameObject.SetActive(on);
+                if (!on) { if (m.arrow.gameObject.activeSelf) m.arrow.gameObject.SetActive(false); continue; }
+
+                float pk = m.pulseStart > 0f ? (Time.unscaledTime - m.pulseStart) / Mathf.Max(0.05f, config.offerPulseTime) : 1f;
+                float ps = pk < 1f ? 1f + 0.35f * Mathf.Sin(pk * Mathf.PI) : 1f;
+                if (m.pill.localScale.x != ps) m.pill.localScale = new Vector3(ps, ps, 1f);
+
+                Vector2 size = m.pill.sizeDelta * sc;
+                Vector3 sp = worldCamera.WorldToScreenPoint(m.head);
+                bool inView = sp.z > 0f && sp.x >= 0f && sp.x <= w && sp.y >= 0f && sp.y <= h;
+                if (m.arrow.gameObject.activeSelf == inView) m.arrow.gameObject.SetActive(!inView);
+                if (inView)
+                {
+                    m.pill.position = new Vector3(sp.x, sp.y + size.y * 0.5f, 0f);
+                    continue;
+                }
+
+                // Ray from the car (clamped into the band) toward the passenger, cut by the band edge.
+                Vector3 fs = worldCamera.WorldToScreenPoint(m.from);
+                var o = new Vector2(Mathf.Clamp(fs.x, band.xMin, band.xMax), Mathf.Clamp(fs.y, band.yMin, band.yMax));
+                Vector2 dir = new Vector2(sp.x, sp.y) - o;
+                if (sp.z < 0f) dir = -dir;
+                if (dir.sqrMagnitude < 1f) dir = Vector2.up;
+                dir.Normalize();
+                float t = float.MaxValue;
+                if (dir.x > 1e-4f) t = Mathf.Min(t, (band.xMax - o.x) / dir.x);
+                else if (dir.x < -1e-4f) t = Mathf.Min(t, (band.xMin - o.x) / dir.x);
+                if (dir.y > 1e-4f) t = Mathf.Min(t, (band.yMax - o.y) / dir.y);
+                else if (dir.y < -1e-4f) t = Mathf.Min(t, (band.yMin - o.y) / dir.y);
+                if (t == float.MaxValue) t = 0f;
+                Vector2 edge = o + dir * t;
+
+                m.arrow.position = edge;
+                m.arrow.rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg - 90f);
+                // The pill sits just inside the arrow, its near side touching the arrow's base.
+                float back = config.offerArrowSize * sc * 0.5f + Mathf.Abs(dir.x) * size.x * 0.5f
+                             + Mathf.Abs(dir.y) * size.y * 0.5f + 6f * sc;
+                m.pill.position = edge - dir * back;
+            }
         }
 
         /// <summary>
@@ -140,6 +278,7 @@ namespace Taxi
 
         void LateUpdate()
         {
+            LayoutOrderMarkers();
             bool on = actionRequested && actionBg != null;
             actionRequested = false;
             if (on)
@@ -305,6 +444,64 @@ namespace Taxi
             tex.SetPixels32(px);
             tex.Apply();
             return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 100f);
+        }
+
+        /// <summary>Solid isosceles triangle pointing up (+Y), anti-aliased edges.</summary>
+        public static Sprite Arrow(int size)
+        {
+            var tex = new Texture2D(size, size, TextureFormat.RGBA32, false) { filterMode = FilterMode.Bilinear };
+            var px = new Color32[size * size];
+            // Counter-clockwise corners: tip, bottom-left, bottom-right.
+            Vector2 a = new Vector2(size * 0.5f, size - 2f), b = new Vector2(3f, 3f), c = new Vector2(size - 3f, 3f);
+            for (int y = 0; y < size; y++)
+            for (int x = 0; x < size; x++)
+            {
+                var p = new Vector2(x + 0.5f, y + 0.5f);
+                float d = Mathf.Min(InsideDist(p, a, b), Mathf.Min(InsideDist(p, b, c), InsideDist(p, c, a)));
+                px[y * size + x] = new Color32(255, 255, 255, (byte)(Mathf.Clamp01(d + 0.5f) * 255f));
+            }
+            tex.SetPixels32(px);
+            tex.Apply();
+            return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 100f);
+        }
+
+        /// <summary>Distance from p to the edge a->b, positive on the left side (inside a counter-clockwise polygon).</summary>
+        static float InsideDist(Vector2 p, Vector2 a, Vector2 b)
+        {
+            Vector2 e = (b - a).normalized;
+            Vector2 left = new Vector2(-e.y, e.x);
+            return Vector2.Dot(p - a, left);
+        }
+
+        /// <summary>Suitcase icon: rounded body with a seam and a handle on top, white (tinted by the Image colour).</summary>
+        public static Sprite Suitcase(int size)
+        {
+            var tex = new Texture2D(size, size, TextureFormat.RGBA32, false) { filterMode = FilterMode.Bilinear };
+            var px = new Color32[size * size];
+            float s = size;
+            for (int y = 0; y < size; y++)
+            for (int x = 0; x < size; x++)
+            {
+                float fx = x + 0.5f, fy = y + 0.5f;
+                float body = RoundRect(fx, fy, s * 0.08f, s * 0.06f, s * 0.92f, s * 0.72f, s * 0.1f);
+                float outer = RoundRect(fx, fy, s * 0.32f, s * 0.66f, s * 0.68f, s * 0.92f, s * 0.08f);
+                float inner = RoundRect(fx, fy, s * 0.41f, s * 0.66f, s * 0.59f, s * 0.84f, s * 0.03f);
+                float handle = Mathf.Min(outer, 1f - inner);
+                float seam = Mathf.Clamp01(Mathf.Abs(fy - s * 0.40f) - s * 0.025f);
+                float a = Mathf.Max(body * seam, handle);
+                px[y * size + x] = new Color32(255, 255, 255, (byte)(Mathf.Clamp01(a) * 255f));
+            }
+            tex.SetPixels32(px);
+            tex.Apply();
+            return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 100f);
+        }
+
+        /// <summary>Coverage 0..1 of a pixel by a rounded rectangle (1 px soft edge).</summary>
+        static float RoundRect(float x, float y, float x0, float y0, float x1, float y1, float r)
+        {
+            float cx = Mathf.Clamp(x, x0 + r, x1 - r), cy = Mathf.Clamp(y, y0 + r, y1 - r);
+            float d = Mathf.Sqrt((x - cx) * (x - cx) + (y - cy) * (y - cy)) - r;
+            return Mathf.Clamp01(0.5f - d);
         }
 
         /// <summary>Short bright "ding" (two detuned sines with a fast decay) so payment has a sound without audio files.</summary>

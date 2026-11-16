@@ -90,10 +90,31 @@ namespace Taxi
         /// avoidPickup (-1 = none) is skipped as a pickup when another choice exists, so the next passenger does not
         /// stand exactly where the last one got out.
         /// Constraint strength: no-repeat > new-zone priority > avoid pickup > distance range.
+        /// blockedPickups (bit mask) is hard: two waiting passengers never share a stop. blockedDropoffs is soft: it is
+        /// dropped when that is the only way to get a trip inside the distance range (few stops in Zone 1).
         /// </summary>
         public static bool TryPlan(IReadOnlyList<StopInfo> stops, Func<int, bool> isZoneOpen, int highestOpenZone,
             int priorityZone, in TripRules rules, System.Random rng, int avoidPickup, List<int> scratch, out Trip trip,
-            int[] recentRoutes = null, int recentCount = 0, int forcedPickup = -1)
+            int[] recentRoutes = null, int recentCount = 0, int forcedPickup = -1, long blockedPickups = 0, long blockedDropoffs = 0)
+        {
+            bool ok = TryPlanMasked(stops, isZoneOpen, highestOpenZone, priorityZone, rules, rng, avoidPickup, scratch, out trip,
+                recentRoutes, recentCount, forcedPickup, blockedPickups, blockedDropoffs);
+            if (blockedDropoffs == 0) return ok;
+            Vector2 range = rules.DistanceRange(highestOpenZone);
+            if (ok && trip.distance >= range.x && trip.distance <= range.y) return true;
+            if (TryPlanMasked(stops, isZoneOpen, highestOpenZone, priorityZone, rules, rng, avoidPickup, scratch, out var loose,
+                    recentRoutes, recentCount, forcedPickup, blockedPickups, 0)
+                && (!ok || (loose.distance >= range.x && loose.distance <= range.y)))
+            {
+                trip = loose;
+                return true;
+            }
+            return ok;
+        }
+
+        static bool TryPlanMasked(IReadOnlyList<StopInfo> stops, Func<int, bool> isZoneOpen, int highestOpenZone,
+            int priorityZone, in TripRules rules, System.Random rng, int avoidPickup, List<int> scratch, out Trip trip,
+            int[] recentRoutes, int recentCount, int forcedPickup, long blockedPickups, long blockedDropoffs)
         {
             if (forcedPickup >= 0) avoidPickup = -1;   // a forced pickup (tutorial) overrides the soft "not the last drop-off" rule
             trip = default;
@@ -119,12 +140,14 @@ namespace Taxi
                 {
                     int zi = stops[i].zone;
                     if (zi < 1 || !isZoneOpen(zi) || (useAvoid && i == avoidPickup)) continue;
+                    if (IsBlocked(blockedPickups, i)) continue;
                     if (forcedPickup >= 0 && i != forcedPickup) continue;
                     for (int j = 0; j < n; j++)
                     {
                         if (j == i) continue;
                         int zj = stops[j].zone;
                         if (zj < 1 || !isZoneOpen(zj)) continue;
+                        if (IsBlocked(blockedDropoffs, j)) continue;
                         if (usePriority && zi != priorityZone && zj != priorityZone) continue;
                         if (useRecent && IsRecent(RouteKey(i, j), recentRoutes, recentCount)) continue;
                         float d = Vector2.Distance(stops[i].position, stops[j].position);
@@ -148,6 +171,9 @@ namespace Taxi
             }
             return false;
         }
+
+        /// <summary>Bit i of the mask = stop i is taken (another passenger waits there); stops past 63 are never blocked.</summary>
+        public static bool IsBlocked(long mask, int stop) => stop < 64 && (mask & (1L << stop)) != 0;
 
         /// <summary>Direction-independent route id: A->B and B->A are the same route.</summary>
         public static int RouteKey(int a, int b) => a < b ? (a << 16) | b : (b << 16) | a;

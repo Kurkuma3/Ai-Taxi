@@ -111,10 +111,35 @@ namespace Taxi
         public float passengerWalkSpeed = 2.5f;
         [Tooltip("Boarding / getting out never takes longer than this; the passenger snaps to the end point.")]
         public float passengerWalkMaxTime = 1.5f;
-        [Tooltip("Pause between a paid trip and the next passenger appearing.")]
+        [Tooltip("Pause before an empty order slot gets a new waiting passenger (after one was picked up).")]
         public float nextTripDelay = 1.0f;
         [Tooltip("Fare label height above the passenger's feet, metres.")]
         public float fareLabelHeight = 2.4f;
+
+        [Header("Orders (several passengers waiting at once)")]
+        [Tooltip("How many passengers wait at the same time after the tutorial (the tutorial trips are single).")]
+        [Range(1, 5)] public int offerCount = 3;
+        [Tooltip("One colour per order slot: edge arrow, price pill and stop ring. Avoid amber, it is the drop-off colour.")]
+        public Color[] offerColors =
+        {
+            new Color(0.30f, 0.90f, 0.45f),
+            new Color(0.30f, 0.72f, 1.00f),
+            new Color(1.00f, 0.45f, 0.78f),
+        };
+        [Tooltip("After a drop-off the new set of orders pops in one by one, this many seconds apart.")]
+        public float offerSpawnStagger = 0.25f;
+        [Tooltip("Price pill punch (scale up, then back) when an order's destination and fare change after a zone opens.")]
+        public float offerPulseTime = 0.5f;
+        [Tooltip("A passenger who was dropped off stays visible this long, then disappears.")]
+        public float leavingPassengerTime = 3f;
+        [Tooltip("Edge arrow size, reference pixels (1080x1920 canvas).")]
+        public float offerArrowSize = 110f;
+        [Tooltip("Gap between the screen side and the edge arrows, reference pixels.")]
+        public float offerEdgeMargin = 80f;
+        [Tooltip("Edge arrows stay below this fraction of the screen height from the top (keeps the money counter clear).")]
+        [Range(0f, 0.5f)] public float offerEdgeTop = 0.13f;
+        [Tooltip("Edge arrows stay above this fraction of the screen height from the bottom (the thumb / stick area).")]
+        [Range(0f, 0.5f)] public float offerEdgeBottom = 0.3f;
 
         [Header("Payment")]
         [Tooltip("Money in the wallet when the game starts.")]

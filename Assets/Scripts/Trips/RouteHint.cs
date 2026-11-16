@@ -6,6 +6,8 @@ namespace Taxi
     /// Route hint: a flat arrow on the ground that circles the car (or the player on foot) and points straight at the
     /// target, plus a pulsing ring with a light beam on the target stop. Built procedurally in Awake from one material;
     /// the colour (pickup vs drop-off) is set through a MaterialPropertyBlock, so it costs no extra materials.
+    /// Order rings: one flat ring per waiting order on its stop, in the order's colour, requested every frame
+    /// (ShowOrderRing) and hidden in LateUpdate when nobody asked.
     /// </summary>
     public class RouteHint : MonoBehaviour
     {
@@ -22,6 +24,12 @@ namespace Taxi
         bool visible;
         Color current = Color.clear;
 
+        Transform[] orderRings;
+        Renderer[] orderRingRenderers;
+        Color[] orderRingColors;
+        bool[] orderRingRequested;
+        MaterialPropertyBlock orderBlock;
+
         void Awake()
         {
             block = new MaterialPropertyBlock();
@@ -31,14 +39,58 @@ namespace Taxi
             ring = MakePart("Ring", RingMesh(1.6f, 2.2f, 24), marker);
             beam = MakePart("Beam", BoxMesh(0.35f, 7f), marker);
             renderers = GetComponentsInChildren<Renderer>(true);
+
+            int n = Mathf.Max(1, config.offerCount);
+            orderBlock = new MaterialPropertyBlock();
+            orderRings = new Transform[n];
+            orderRingRenderers = new Renderer[n];
+            orderRingColors = new Color[n];
+            orderRingRequested = new bool[n];
+            var orderMesh = RingMesh(1.3f, 1.7f, 24);
+            for (int i = 0; i < n; i++)
+            {
+                orderRings[i] = MakePart("OrderRing" + i, orderMesh, transform);
+                orderRingRenderers[i] = orderRings[i].GetComponent<Renderer>();
+                orderRings[i].gameObject.SetActive(false);
+            }
             Hide();
         }
 
+        /// <summary>Ring on a waiting order's stop for this frame.</summary>
+        public void ShowOrderRing(int slot, Vector3 stop, Color c)
+        {
+            if (slot < 0 || slot >= orderRings.Length) return;
+            orderRingRequested[slot] = true;
+            var t = orderRings[slot];
+            if (!t.gameObject.activeSelf) t.gameObject.SetActive(true);
+            float pulse = 1f + 0.06f * Mathf.Sin(Time.time * 4f + slot);
+            t.position = new Vector3(stop.x, 0.055f, stop.z);
+            t.localScale = new Vector3(pulse, 1f, pulse);
+            if (orderRingColors[slot] != c)
+            {
+                orderRingColors[slot] = c;
+                orderBlock.SetColor(BaseColorId, c);
+                orderRingRenderers[slot].SetPropertyBlock(orderBlock);
+            }
+        }
+
+        void LateUpdate()
+        {
+            for (int i = 0; i < orderRings.Length; i++)
+            {
+                if (!orderRingRequested[i] && orderRings[i].gameObject.activeSelf) orderRings[i].gameObject.SetActive(false);
+                orderRingRequested[i] = false;
+            }
+        }
+
         /// <summary>Points from 'from' to 'target'. Call every frame while a trip is active.</summary>
-        public void Show(Vector3 from, Vector3 target, bool dropoff)
+        public void Show(Vector3 from, Vector3 target, bool dropoff) => Show(from, target, dropoff ? dropoffColor : pickupColor);
+
+        /// <summary>Same with an explicit colour (the order's colour while heading to a pickup).</summary>
+        public void Show(Vector3 from, Vector3 target, Color color)
         {
             if (!visible) { visible = true; marker.gameObject.SetActive(true); }
-            SetColor(dropoff ? dropoffColor : pickupColor);
+            SetColor(color);
 
             float t = Time.time;
             marker.position = new Vector3(target.x, 0.06f, target.z);

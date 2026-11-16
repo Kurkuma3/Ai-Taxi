@@ -69,6 +69,18 @@ MonoBehaviour:
   passengerWalkMaxTime: 1.5
   nextTripDelay: 1
   fareLabelHeight: 2.4
+  offerCount: 3
+  offerColors:
+  - {r: 0.3, g: 0.9, b: 0.45, a: 1}
+  - {r: 0.3, g: 0.72, b: 1, a: 1}
+  - {r: 1, g: 0.45, b: 0.78, a: 1}
+  offerSpawnStagger: 0.25
+  offerPulseTime: 0.5
+  leavingPassengerTime: 3
+  offerArrowSize: 110
+  offerEdgeMargin: 80
+  offerEdgeTop: 0.13
+  offerEdgeBottom: 0.3
   startMoney: 50
   moneyCountUpTime: 0.8
   coinsPerPayment: 8
