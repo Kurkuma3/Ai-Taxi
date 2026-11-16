@@ -134,7 +134,7 @@ Verify: run **Taxi > Setup Passengers**, console clean; drag a passenger prefab 
 
 Files: `Assets/Scripts/Trips/` (`TripPlanner`, `TripManager`, `ZoneProgress`, `Wallet`, `Passenger`, `RouteHint`), additions to `Hud` and `PassengerStop`, editor `Assets/Editor/TripSystemSetup.cs`. All numbers are in `GameplayConfig` (headers Fares, Trip length, Passenger, Payment, Route hint).
 
-**Zones.** `ZoneProgress` keeps which zones are open (Zone 1 from the start) and `HighestOpen`. `Open(z)` makes z the *new zone* for the next `newZonePriorityTrips` (4) planned trips. Open zones are saved (PlayerPrefs bitmask `Taxi.OpenZones`) and restored on launch without the new-zone priority. Menu **Taxi > Reset Save (open zones)** clears it. Money and the tutorial counter are not saved. In the editor only (`#if UNITY_EDITOR`, absent from builds), keys **1–4** open a zone.
+**Zones.** `ZoneProgress` keeps which zones are open (Zone 1 from the start) and `HighestOpen`. `Open(z)` makes z the *new zone* for the next `newZonePriorityTrips` (4) planned trips. Open zones are saved (PlayerPrefs bitmask `Taxi.OpenZones`) and restored on launch without the new-zone priority. Menu **Taxi > Reset Save (open zones)** clears it. Money and the tutorial counter are not saved. In the editor only (`#if UNITY_EDITOR`, absent from builds), keys **1–4** open a zone for the current session only; they are **not saved**, so they never hide barriers on the next Play. When a saved mask other than Zone 1 is restored, the console logs it once at start.
 
 **Buying zones** (`BarrierShop`, config header Zones for sale).
 - Each `ZoneBarrier` sits between two zones: `closesZone` (higher), `otherZone` (lower) and `forwardZone` (the one on its +Z side). **Taxi > Setup Trip System** assigns them from the CityLayout zone rectangles 6 m ahead of and behind the barrier, with the park counting as Zone 4. This also fixed the hand-placed copy `Bar_West_Z4 (1)` at (181, 83), which is a Zone 2 / park (Zone 4) barrier, not Zone 1 / Zone 4.
@@ -208,6 +208,7 @@ Known: `Stop_Depot` is 31–35 m from Stop_20 and Stop_23 (below the 40 m minimu
 
 ## Change log
 
+- 2026-11-16 — Fix: Zone 2 barriers were missing on Play because a debug key had saved Zone 2 as open. Debug opens (keys 1–4) are no longer saved; restored progress is logged at start; the local save was reset.
 - 2026-11-16 — Zone purchase at barriers: stop in front, ring fills, pay, barrier pops with sound, zone saved; red blinking price when short of money; barriers know both zones (Z3/Z4 rule); config header Zones for sale; debug keys 1–4 editor-only; Taxi > Reset Save.
 - 2026-11-16 — Luggage: suitcase trips (tutorial mission 2 always, then 30%, +$5): load at pickup (suitcase → trunk on foot with action rings), unload at drop-off (trunk → drop point, then paid); no entering the car while carrying; config header Luggage; `Hud.RequestActionRing`.
 - 2026-11-16 — Tutorial: the first two trips start on the depot lot (mission 1 Stop_Parking, mission 2 Stop_Depot), `PassengerStop.tutorialMission`, config `tutorialTrips`.
