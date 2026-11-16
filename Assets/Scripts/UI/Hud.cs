@@ -165,6 +165,67 @@ namespace Taxi
             outline.effectDistance = new Vector2(3f, -3f);
             tipGo.AddComponent<Outline>().effectDistance = new Vector2(3f, -3f);
             payRoot.gameObject.SetActive(false);
+            BuildHint();
+        }
+
+        // ---- Tutorial finger hint (requested every frame, hidden in LateUpdate when nobody asked) ------------------
+
+        RectTransform hintFinger, hintLabelRoot;
+        Text hintText;
+        bool hintRequested;
+        Vector3 hintWorld;
+        string hintShown;
+
+        /// <summary>Animated finger tapping at a world point, with a short label under it. Call every frame while needed.</summary>
+        public void RequestHint(Vector3 worldPos, string text)
+        {
+            hintRequested = true;
+            hintWorld = worldPos;
+            if (hintText != null && text != hintShown) { hintShown = text; hintText.text = text; }
+        }
+
+        void BuildHint()
+        {
+            var go = new GameObject("HintFinger", typeof(RectTransform), typeof(Image));
+            hintFinger = (RectTransform)go.transform;
+            hintFinger.SetParent(fareLabel.parent, false);
+            hintFinger.sizeDelta = new Vector2(150f, 150f);
+            hintFinger.pivot = new Vector2(0.5f, 1f);   // the fingertip is the top of the sprite
+            var img = go.GetComponent<Image>();
+            img.sprite = UiSprites.Finger(128);
+            img.raycastTarget = false;
+            go.AddComponent<Outline>().effectDistance = new Vector2(4f, -4f);
+            go.SetActive(false);
+            hintLabelRoot = Banner("HintLabel", new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(620f, 76f),
+                new Color(0.1f, 0.1f, 0.12f, 0.8f), 40, Color.white, out hintText);
+            hintLabelRoot.pivot = new Vector2(0.5f, 1f);
+            hintLabelRoot.gameObject.SetActive(false);
+        }
+
+        void LayoutHint()
+        {
+            if (hintFinger == null) return;
+            bool on = hintRequested;
+            hintRequested = false;
+            Vector3 sp = on ? worldCamera.WorldToScreenPoint(hintWorld) : Vector3.zero;
+            on &= sp.z > 0f;
+            if (hintFinger.gameObject.activeSelf != on)
+            {
+                hintFinger.gameObject.SetActive(on);
+                hintLabelRoot.gameObject.SetActive(on);
+            }
+            if (!on) return;
+            float sc = canvas.scaleFactor;
+            // Tap: the tip dips onto the point and lifts off, with a slight squash on contact.
+            float t = Mathf.Repeat(Time.unscaledTime * 1.4f, 1f);
+            float lift = (t < 0.5f ? 1f - t * 2f : (t - 0.5f) * 2f) * 34f * sc;
+            float squash = t > 0.4f && t < 0.6f ? 0.9f : 1f;
+            // The hand comes from below-right, pointing up-left at the target.
+            Vector2 tip = new Vector2(sp.x, sp.y) + new Vector2(0.45f, -0.9f) * lift;
+            hintFinger.position = tip;
+            hintFinger.localRotation = Quaternion.Euler(0f, 0f, 25f);
+            hintFinger.localScale = new Vector3(squash, squash, 1f);
+            hintLabelRoot.position = new Vector2(sp.x, sp.y - 190f * sc);
         }
 
         RectTransform payRoot;
@@ -393,6 +454,7 @@ namespace Taxi
         void LateUpdate()
         {
             LayoutOrderMarkers();
+            LayoutHint();
             bool on = actionRequested && actionBg != null;
             actionRequested = false;
             if (on)
@@ -625,6 +687,28 @@ namespace Taxi
             tex.SetPixels32(px);
             tex.Apply();
             return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 100f);
+        }
+
+        /// <summary>Pointing hand, fingertip at the top centre: index finger, palm and thumb as rounded shapes, white.</summary>
+        public static Sprite Finger(int size)
+        {
+            var tex = new Texture2D(size, size, TextureFormat.RGBA32, false) { filterMode = FilterMode.Bilinear };
+            var px = new Color32[size * size];
+            float s = size;
+            for (int y = 0; y < size; y++)
+            for (int x = 0; x < size; x++)
+            {
+                float fx = x + 0.5f, fy = y + 0.5f;
+                float finger = RoundRect(fx, fy, s * 0.40f, s * 0.42f, s * 0.60f, s * 0.99f, s * 0.10f);
+                float palm = RoundRect(fx, fy, s * 0.30f, s * 0.04f, s * 0.80f, s * 0.52f, s * 0.13f);
+                float knuckles = RoundRect(fx, fy, s * 0.58f, s * 0.30f, s * 0.82f, s * 0.56f, s * 0.08f);
+                float thumb = RoundRect(fx, fy, s * 0.16f, s * 0.22f, s * 0.36f, s * 0.46f, s * 0.09f);
+                float a = Mathf.Max(Mathf.Max(finger, palm), Mathf.Max(knuckles, thumb));
+                px[y * size + x] = new Color32(255, 255, 255, (byte)(a * 255f));
+            }
+            tex.SetPixels32(px);
+            tex.Apply();
+            return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 1f), 100f);
         }
 
         /// <summary>Coverage 0..1 of a pixel by a rounded rectangle (1 px soft edge).</summary>

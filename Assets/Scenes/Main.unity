@@ -9892,6 +9892,7 @@ GameObject:
   - component: {fileID: 460561917}
   - component: {fileID: 460561916}
   - component: {fileID: 460561918}
+  - component: {fileID: 460561919}
   m_Layer: 0
   m_Name: Systems
   m_TagString: Untagged
@@ -10101,6 +10102,23 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Taxi.Runtime::Taxi.LaunchReset
   config: {fileID: 11400000, guid: 74d7e2b5b595a1549aca00f81d139ef4, type: 2}
+--- !u!114 &460561919
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 460561905}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 50f17fea1dab0234685db16856d8a5ba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Taxi.Runtime::Taxi.TutorialHints
+  tracker: {fileID: 460561915}
+  trips: {fileID: 460561909}
+  playerState: {fileID: 460561906}
+  car: {fileID: 1151517011}
+  hud: {fileID: 1110557563}
 --- !u!1001 &499278880
 PrefabInstance:
   m_ObjectHideFlags: 0

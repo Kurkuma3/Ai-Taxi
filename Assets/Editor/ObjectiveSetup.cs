@@ -42,6 +42,12 @@ namespace Taxi.EditorTools
             var log = GetOrAdd<ObjectiveLog>(systems);
             Set(log, "tracker", tracker);
             GetOrAdd<DebugPanel>(systems);
+            var hints = GetOrAdd<TutorialHints>(systems);
+            Set(hints, "tracker", tracker);
+            Set(hints, "trips", trips);
+            Set(hints, "playerState", fsm);
+            Set(hints, "car", Object.FindAnyObjectByType<CarController>());
+            Set(hints, "hud", hud);
             var reset = GetOrAdd<LaunchReset>(systems);
             Set(reset, "config", cfg);
             EditorSceneManager.MarkSceneDirty(systems.scene);
