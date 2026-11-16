@@ -206,6 +206,29 @@ namespace Taxi
         [Tooltip("Sign blink rate (per second) when the player cannot afford the next level.")]
         public float upgradeBlinkRate = 5f;
 
+        [Header("Objectives")]
+        [Tooltip("The 10 objectives in order. The intro (walk to the taxi, get in) runs before the first one.")]
+        public ObjectiveDef[] objectives =
+        {
+            new ObjectiveDef("First fare", ObjectiveKind.AnyRide, 1),
+            new ObjectiveDef("Heavy bags", ObjectiveKind.LuggageRide, 1),
+            new ObjectiveDef("Smooth ride", ObjectiveKind.CleanRide, 2),
+            new ObjectiveDef("New district", ObjectiveKind.ZoneRide, 2, zone: 2),
+            new ObjectiveDef("Tune-up", ObjectiveKind.EngineThenRide, 1, upgradeLevel: 1),
+            new ObjectiveDef("Long haul", ObjectiveKind.ZoneRide, 3, zone: 2),
+            new ObjectiveDef("Luggage pro", ObjectiveKind.CleanLuggageRide, 1),
+            new ObjectiveDef("Rush hour", ObjectiveKind.TimedRides, 3, timeLimit: 90f),
+            new ObjectiveDef("Downtown", ObjectiveKind.ZoneRide, 2, zone: 3),
+            new ObjectiveDef("Top driver", ObjectiveKind.PerfectStreak, 3),
+        };
+        [Tooltip("A hit counts as a bump (for ratings and clean-ride objectives) from this impact speed, m/s " +
+                 "(speed into the obstacle; grazing a curb does not count).")]
+        public float bumpMinImpactSpeed = 3f;
+        [Tooltip("Ride rating: 5 stars minus this many per bump during the ride (minimum 1).")]
+        public int starsLostPerBump = 1;
+        [Tooltip("How long the ride rating (\"★★★★★ perfect ride!\") stays on screen, seconds.")]
+        public float rideToastTime = 2.5f;
+
         [Header("Route hint")]
         [Tooltip("Distance from the car (or the player on foot) at which the ground arrow circles.")]
         public float routeArrowRadius = 3.6f;

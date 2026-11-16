@@ -68,6 +68,21 @@ namespace Taxi
             }
         }
 
+        /// <summary>A finished, paid ride (raised when the passenger has walked off / the suitcase was delivered).</summary>
+        public struct RideResult
+        {
+            public bool luggage;
+            public int fromZone, toZone;
+            public int bumps;   // hits of at least bumpMinImpactSpeed while the passenger was on board
+            public int stars;   // 1..5
+            public int fare;
+        }
+        public event System.Action<RideResult> RideCompleted;
+        /// <summary>Set by the objectives while they need a luggage ride: each new set of orders then has one.</summary>
+        public bool ForceLuggageOrder { get; set; }
+
+        int rideBumps;
+
         public State Current { get; private set; }
         /// <summary>Passengers picked up this session.</summary>
         public int TripsTaken { get; private set; }
@@ -149,6 +164,7 @@ namespace Taxi
             }
             zones.ZoneOpened += OnZoneOpened;
             if (upgrades != null) upgrades.Changed += OnUpgradeChanged;
+            car.Bumped += OnCarBumped;
             Enter(State.Searching);
         }
 
@@ -156,6 +172,7 @@ namespace Taxi
         {
             if (zones != null) zones.ZoneOpened -= OnZoneOpened;
             if (upgrades != null) upgrades.Changed -= OnUpgradeChanged;
+            if (car != null) car.Bumped -= OnCarBumped;
         }
 
         void CollectStops()
@@ -308,6 +325,8 @@ namespace Taxi
             RememberRoute(trip);
             // Tutorial mission 2 always has a suitcase, mission 1 never; afterwards luggageTripChance.
             bool luggageTrip = mission <= config.tutorialTrips ? mission == 2 : rng.NextDouble() < config.luggageTripChance;
+            // An objective needs a luggage ride: make sure this set of orders has one.
+            if (ForceLuggageOrder && mission > config.tutorialTrips && !AnyWaitingLuggage()) luggageTrip = true;
             int cIndex = luggageTrip ? FreeSuitcase() : -1;
             if (cIndex >= 0) trip = trip.WithLuggage(config.luggageBonus);
 
@@ -391,6 +410,12 @@ namespace Taxi
             recentRoutes[recentNext] = TripPlanner.RouteKey(trip.pickup, trip.dropoff);
             recentNext = (recentNext + 1) % recentRoutes.Length;
             if (recentCount < recentRoutes.Length) recentCount++;
+        }
+
+        bool AnyWaitingLuggage()
+        {
+            foreach (var o in orders) if (o.active && o.trip.luggage) return true;
+            return false;
         }
 
         /// <summary>Stops with a waiting passenger (avoided as drop-offs when the distance range allows).</summary>
@@ -524,11 +549,37 @@ namespace Taxi
             boardingSlot = -1;
             committedSlot = -1;
             TripsTaken++;
+            rideBumps = 0;
             Enter(State.Riding);
         }
 
+        void OnCarBumped(float impact)
+        {
+            if (Current == State.Riding) rideBumps++;   // only hits with a passenger on board count
+        }
+
+        /// <summary>5 stars minus starsLostPerBump per bump during the ride, at least 1.</summary>
+        int RideStars => Mathf.Clamp(5 - rideBumps * Mathf.Max(0, config.starsLostPerBump), 1, 5);
+
+        /// <summary>Rating toast at the moment of payment ("★★★★★ perfect ride!").</summary>
+        void ShowRating()
+        {
+            int s = RideStars;
+            hud.ShowToast(StarText[s], config.rideToastTime);
+        }
+
+        static readonly string[] StarText =
+        {
+            "", "★☆☆☆☆", "★★☆☆☆", "★★★☆☆", "★★★★☆ nice ride", "★★★★★ perfect ride!",
+        };
+
         void FinishRide()
         {
+            RideCompleted?.Invoke(new RideResult
+            {
+                luggage = ride.trip.luggage, fromZone = ride.trip.fromZone, toZone = ride.trip.toZone,
+                bumps = rideBumps, stars = RideStars, fare = ride.trip.fare,
+            });
             // The passenger (and a delivered suitcase) stays at the stop for a moment, then disappears.
             ReleasePassenger(leaving);
             ReleaseSuitcase(leavingSuitcase);
@@ -612,6 +663,7 @@ namespace Taxi
             ride.luggage = Luggage.Delivered;
             PlaceSuitcase(ride.suitcase, dropPoint, ride.passenger.transform.eulerAngles.y);
             wallet.Add(ride.trip.fare, dropPoint);
+            ShowRating();
             hud.PlayPayment(dropPoint + Vector3.up * 1.5f, wallet.Money);
             lastDropoff = ride.trip.dropoff;
             FinishRide();
@@ -677,6 +729,7 @@ namespace Taxi
                     if (ride.trip.luggage) break;   // paid when the suitcase is delivered (AwaitLuggage)
                     lastDropoff = ride.trip.dropoff;
                     wallet.Add(ride.trip.fare, door);
+                    ShowRating();
                     hud.PlayPayment(door + Vector3.up * 1.5f, wallet.Money);
                     break;
                 }

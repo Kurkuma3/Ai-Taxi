@@ -117,6 +117,7 @@ namespace Taxi
             moneyText.text = "$0";
             if (fareLabel != null) fareLabel.gameObject.SetActive(false);
             BuildOrderMarkers();
+            BuildBanners();
             int n = Mathf.Clamp(config.coinsPerPayment, 1, 32);
             coins = new Coin[n];
             var disc = UiSprites.Ring(64, 0f);
@@ -128,6 +129,59 @@ namespace Taxi
                 coins[i].rt = img.rectTransform;
             }
             coinClip = UiSprites.CoinClip();
+        }
+
+        // ---- Objective line (under the money counter) and the ride-rating toast --------------------------------
+
+        RectTransform objectiveRoot, toastRoot;
+        Text objectiveText, toastText;
+        string objectiveShown;
+        float toastUntil = -1f;
+
+        void BuildBanners()
+        {
+            if (fareLabel == null) return;
+            objectiveRoot = Banner("ObjectiveLine", new Vector2(0.5f, 1f), new Vector2(0f, -205f), new Vector2(960f, 84f),
+                new Color(0.1f, 0.1f, 0.12f, 0.75f), 46, Color.white, out objectiveText);
+            toastRoot = Banner("RideToast", new Vector2(0.5f, 0.5f), new Vector2(0f, 420f), new Vector2(760f, 96f),
+                new Color(0.1f, 0.1f, 0.12f, 0.8f), 52, new Color(1f, 0.86f, 0.25f), out toastText);
+            objectiveRoot.gameObject.SetActive(false);
+            toastRoot.gameObject.SetActive(false);
+        }
+
+        RectTransform Banner(string name, Vector2 anchor, Vector2 pos, Vector2 size, Color bg, int fontSize, Color textColor, out Text text)
+        {
+            var go = Instantiate(fareLabel.gameObject, fareLabel.parent);
+            go.name = name;
+            var rt = (RectTransform)go.transform;
+            rt.anchorMin = rt.anchorMax = anchor;
+            rt.pivot = new Vector2(0.5f, anchor.y);
+            rt.anchoredPosition = pos;
+            rt.sizeDelta = size;
+            go.GetComponent<Image>().color = bg;
+            text = go.GetComponentInChildren<Text>(true);
+            text.fontSize = fontSize;
+            text.color = textColor;
+            text.horizontalOverflow = HorizontalWrapMode.Overflow;
+            return rt;
+        }
+
+        /// <summary>Top line ("Long haul · 1/3"). Null or empty hides it. Rebuilds the text only when it changes.</summary>
+        public void SetObjective(string line)
+        {
+            if (objectiveRoot == null) return;
+            bool on = !string.IsNullOrEmpty(line);
+            if (objectiveRoot.gameObject.activeSelf != on) objectiveRoot.gameObject.SetActive(on);
+            if (on && line != objectiveShown) { objectiveShown = line; objectiveText.text = line; }
+        }
+
+        /// <summary>Short message in the upper middle of the screen (ride rating), hidden after 'seconds'.</summary>
+        public void ShowToast(string message, float seconds)
+        {
+            if (toastRoot == null || string.IsNullOrEmpty(message)) return;
+            toastText.text = message;
+            toastRoot.gameObject.SetActive(true);
+            toastUntil = Time.unscaledTime + seconds;
         }
 
         void BuildOrderMarkers()
@@ -371,6 +425,11 @@ namespace Taxi
 
         void Update()
         {
+            if (toastUntil >= 0f && Time.unscaledTime >= toastUntil)
+            {
+                toastUntil = -1f;
+                toastRoot.gameObject.SetActive(false);
+            }
             if (coins == null) return;
             float now = Time.unscaledTime;
             for (int i = 0; i < coins.Length; i++)

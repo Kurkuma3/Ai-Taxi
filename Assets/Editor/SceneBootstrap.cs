@@ -149,6 +149,7 @@ namespace Taxi.EditorTools
             PassengerAssets.Setup();
             TripSystemSetup.Setup();
             UpgradeSetup.Setup();
+            ObjectiveSetup.Setup();
 
             // ---- Save & project settings ------------------------------------------
             EditorSceneManager.SaveScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene(), ScenePath);

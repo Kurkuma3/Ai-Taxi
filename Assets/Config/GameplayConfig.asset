@@ -89,7 +89,7 @@ MonoBehaviour:
   leavingPassengerTime: 3
   offerArrowSize: 110
   offerEdgeMargin: 80
-  offerEdgeTop: 0.13
+  offerEdgeTop: 0.17
   offerEdgeBottom: 0.3
   startMoney: 50
   moneyCountUpTime: 0.8
@@ -113,5 +113,69 @@ MonoBehaviour:
   upgradePadRadius: 1.4
   upgradeBuyTime: 0.8
   upgradeBlinkRate: 5
+  objectives:
+  - title: First fare
+    kind: 0
+    count: 1
+    zone: 0
+    upgradeLevel: 1
+    timeLimit: 90
+  - title: Heavy bags
+    kind: 1
+    count: 1
+    zone: 0
+    upgradeLevel: 1
+    timeLimit: 90
+  - title: Smooth ride
+    kind: 2
+    count: 2
+    zone: 0
+    upgradeLevel: 1
+    timeLimit: 90
+  - title: New district
+    kind: 3
+    count: 2
+    zone: 2
+    upgradeLevel: 1
+    timeLimit: 90
+  - title: Tune-up
+    kind: 4
+    count: 1
+    zone: 0
+    upgradeLevel: 1
+    timeLimit: 90
+  - title: Long haul
+    kind: 3
+    count: 3
+    zone: 2
+    upgradeLevel: 1
+    timeLimit: 90
+  - title: Luggage pro
+    kind: 6
+    count: 1
+    zone: 0
+    upgradeLevel: 1
+    timeLimit: 90
+  - title: Rush hour
+    kind: 5
+    count: 3
+    zone: 0
+    upgradeLevel: 1
+    timeLimit: 90
+  - title: Downtown
+    kind: 3
+    count: 2
+    zone: 3
+    upgradeLevel: 1
+    timeLimit: 90
+  - title: Top driver
+    kind: 7
+    count: 3
+    zone: 0
+    upgradeLevel: 1
+    timeLimit: 90
+  bumpMinImpactSpeed: 3
+  starsLostPerBump: 1
+  rideToastTime: 2.5
   routeArrowRadius: 3.6
   routeArrowHideDistance: 9

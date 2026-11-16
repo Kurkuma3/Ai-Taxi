@@ -141,7 +141,7 @@ Verify: run **Taxi > Setup Passengers**, console clean; drag a passenger prefab 
 
 Files: `Assets/Scripts/Trips/` (`TripPlanner`, `TripManager`, `ZoneProgress`, `Wallet`, `Passenger`, `RouteHint`), additions to `Hud` and `PassengerStop`, editor `Assets/Editor/TripSystemSetup.cs`. All numbers are in `GameplayConfig` (headers Fares, Trip length, Passenger, Payment, Route hint).
 
-**Zones.** `ZoneProgress` keeps which zones are open (Zone 1 from the start) and `HighestOpen`. `Open(z)` makes z the *new zone* for the next `newZonePriorityTrips` (4) planned trips. Open zones are saved (PlayerPrefs bitmask `Taxi.OpenZones`) and restored on launch without the new-zone priority. Menu **Taxi > Reset Save (zones, upgrades)** clears it, together with the upgrade levels. Money and the tutorial counter are not saved. In the editor only (`#if UNITY_EDITOR`, absent from builds), keys **1–4** open a zone for the current session only; they are **not saved**, so they never hide barriers on the next Play. When a saved mask other than Zone 1 is restored, the console logs it once at start.
+**Zones.** `ZoneProgress` keeps which zones are open (Zone 1 from the start) and `HighestOpen`. `Open(z)` makes z the *new zone* for the next `newZonePriorityTrips` (4) planned trips. Open zones are saved (PlayerPrefs bitmask `Taxi.OpenZones`) and restored on launch without the new-zone priority. Menu **Taxi > Reset Save (zones, upgrades, objectives)** clears it, together with the upgrade levels and the objective progress. Money and the tutorial counter are not saved. In the editor only (`#if UNITY_EDITOR`, absent from builds), keys **1–4** open a zone for the current session only; they are **not saved**, so they never hide barriers on the next Play. When a saved mask other than Zone 1 is restored, the console logs it once at start.
 
 **Buying zones** (`BarrierShop`, config header Zones for sale).
 - Each `ZoneBarrier` sits between two zones: `closesZone` (higher), `otherZone` (lower) and `forwardZone` (the one on its +Z side). **Taxi > Setup Trip System** assigns them from the CityLayout zone rectangles 6 m ahead of and behind the barrier, with the park counting as Zone 4. This also fixed the hand-placed copy `Bar_West_Z4 (1)` at (181, 83), which is a Zone 2 / park (Zone 4) barrier, not Zone 1 / Zone 4.
@@ -247,8 +247,32 @@ After a purchase that pad re-arms only once the player steps off, so standing st
 
 Verify: Taxi > Reset Save, Play, get $80 or more, walk onto the Engine pad: the ring fills, $80 flies out, the sign reads "Engine Lv2 · $160 (18 m/s)", and the car reaches a higher top speed in about the same time (the camera zooms out to the same height at the new top speed). With less money the sign blinks red. Buy Fare Meter while orders wait: their prices go up and punch. Restart: the levels are kept. Play Mode was not run for this feature.
 
+## 13. Intro, objectives, ride rating
+
+Files: `Assets/Scripts/Objectives/` (`ObjectiveDef`, `ObjectiveTracker`), editor `Assets/Editor/ObjectiveSetup.cs` (menu **Taxi > Setup Objectives**, also called by SceneBootstrap). Config header **Objectives**. The design table is in `docs/OBJECTIVES.md`.
+
+**Tracker.** Step 0 is the intro: the top line says "Drag to walk to your taxi, stand next to it" and the step is done when the player gets in. Steps 1–10 are `config.objectives` in order, each with a title, a kind, a count and optional zone, upgrade level and time limit. The top line shows "Title · progress/count". While a precondition is missing it shows "New district · open Zone 2 at a barrier" or "Tune-up · buy Engine Lv1 at the garage". Rush hour adds a countdown ("Rush hour · 1/3 · 0:42"). After the last step: "All objectives done! Free ride". The step index and the summed time are saved in PlayerPrefs (`Taxi.Objective`, `Taxi.ObjectiveTotal`).
+
+**Counting** (on `TripManager.RideCompleted`, raised when the ride is finished and paid):
+- AnyRide: every ride. LuggageRide: rides with a suitcase.
+- ZoneRide: the ride starts or ends in the zone, and the zone is open.
+- EngineThenRide: rides after Engine reaches the level.
+- CleanRide and CleanLuggageRide: rides with 0 bumps. A bumped ride is a failed attempt; progress is kept.
+- PerfectStreak: 5-star rides in a row. A worse ride resets to 0 and counts as a new attempt.
+- TimedRides: the window starts with the objective. When it runs out, progress resets and a new attempt starts with a fresh window.
+`Completed(number, title, start, finish, attempts)` and `AllCompleted(total)` are raised for the log.
+
+**Luggage guarantee.** While Heavy bags or Luggage pro is active, `TripManager.ForceLuggageOrder` makes sure every new set of orders has a luggage order. With the normal 30% chance, about a third of the sets would have none.
+
+**Bumps and rating.** `CarController.Bumped(impact)` fires when the speed into an obstacle (|speed| × how head-on) is at least `bumpMinImpactSpeed` (3 m/s). Ground contacts and curb grazes do not count. `TripManager` counts bumps only in `Riding`. Rating = 5 − `starsLostPerBump` × bumps (minimum 1). At payment a toast shows "★★★★★ perfect ride!" (or "★★★★☆ nice ride", "★★★☆☆" …) for `rideToastTime` (2.5 s). The editor font has the star glyphs (`Font.HasCharacter` true on Windows). On Android they come from the system font fallback, not checked on a phone.
+
+**HUD.** `Hud.SetObjective` uses a dark pill under the money counter (top, y −205, 960 × 84, font 46). `Hud.ShowToast` uses a pill in the upper middle (y +420 from the centre). Both are cloned at runtime from the fare-label template. `offerEdgeTop` was raised from 0.13 to 0.17 so the order edge arrows stay below the objective line.
+
+Verify: Reset Save, Play. The top line shows the intro text. Get in: "First fare · 0/1". Finish the ride: the rating toast appears and the line switches to "Heavy bags · 0/1". Play Mode was not run for this feature.
+
 ## Change log
 
+- 2026-11-16 — Objectives: intro + 10 objectives from config (`ObjectiveTracker`, top line "Title · n/m"), ride bumps (`CarController.Bumped`, `bumpMinImpactSpeed`) and 1–5 star rating toast, luggage order guaranteed while a luggage objective is active, `docs/OBJECTIVES.md`; `Taxi > Setup Objectives`.
 - 2026-11-16 — Engine upgrade now raises top speed 12 → 15 → 18 m/s (config `engineTopSpeeds`, replaces `engineAccelPerLevel`), acceleration scales with it; camera zoom uses the current top speed; Engine sign shows the speed, its board is wider.
 - 2026-11-16 — Upgrades: three garage pads (Engine +15% acceleration, Steering +15% turn rate, Fare Meter +10% fares; two levels each), ring purchase on foot, red blink when short, MAX sign, saved, cleared by Reset Save; config header Upgrades; `Taxi > Setup Upgrades`.
 - 2026-11-16 — Fix luggage order: at pickup the passenger boards only after the suitcase is in the trunk; at drop-off the passenger waits beside the car (config `passengerStandOffset`) and the suitcase goes to them, not to the car.

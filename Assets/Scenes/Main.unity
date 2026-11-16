@@ -7495,6 +7495,7 @@ GameObject:
   - component: {fileID: 460561912}
   - component: {fileID: 460561914}
   - component: {fileID: 460561913}
+  - component: {fileID: 460561915}
   m_Layer: 0
   m_Name: Systems
   m_TagString: Untagged
@@ -7648,6 +7649,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Taxi.Runtime::Taxi.Upgrades
   config: {fileID: 11400000, guid: 74d7e2b5b595a1549aca00f81d139ef4, type: 2}
+--- !u!114 &460561915
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 460561905}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e3ba114cca6af884e9bf45970633ba7d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Taxi.Runtime::Taxi.ObjectiveTracker
+  config: {fileID: 11400000, guid: 74d7e2b5b595a1549aca00f81d139ef4, type: 2}
+  trips: {fileID: 460561909}
+  zones: {fileID: 460561911}
+  upgrades: {fileID: 460561914}
+  playerState: {fileID: 460561906}
+  hud: {fileID: 1110557563}
 --- !u!1 &465454427
 GameObject:
   m_ObjectHideFlags: 0

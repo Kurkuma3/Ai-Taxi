@@ -19,6 +19,8 @@ namespace Taxi
         [SerializeField] Upgrades upgrades;
 
         public bool InputEnabled { get; set; }
+        /// <summary>A real hit (impact speed into the obstacle at least bumpMinImpactSpeed); the argument is that speed.</summary>
+        public event System.Action<float> Bumped;
         /// <summary>Signed: positive forward, negative while backing up.</summary>
         public float Speed { get; private set; }
         public bool HasInput { get; private set; }
@@ -110,9 +112,12 @@ namespace Taxi
             if (c.rigidbody != null && !c.rigidbody.isKinematic) return;
             Vector3 moveDir = transform.forward * (Speed >= 0f ? 1f : -1f);
             Vector3 n = c.GetContact(0).normal;
+            if (n.y > 0.7f) return;   // landing on the ground, not a hit
             n.y = 0f;
             float headOn = n.sqrMagnitude > 1e-4f ? Mathf.Clamp01(Vector3.Dot(moveDir, -n.normalized)) : 1f;
+            float impact = Mathf.Abs(Speed) * headOn;   // speed into the obstacle
             Speed *= Mathf.Lerp(1f, config.collisionSpeedKeep, headOn);
+            if (impact >= config.bumpMinImpactSpeed) Bumped?.Invoke(impact);
         }
     }
 }
