@@ -29,6 +29,16 @@ namespace Taxi
         [Range(0f, 1f)] public float collisionSpinKeep = 0f;
         public float stoppedSpeedThreshold = 0.25f;
 
+        [Header("Engine sound")]
+        [Tooltip("Pitch while idling (stopped, driver in).")]
+        public float engineIdlePitch = 0.8f;
+        [Tooltip("Pitch at top speed.")]
+        public float engineMaxPitch = 2.1f;
+        public float engineIdleVolume = 0.12f;
+        public float engineMaxVolume = 0.45f;
+        [Tooltip("How fast pitch and volume follow the speed (exponential rate, 1/s).")]
+        public float engineResponse = 4f;
+
         [Header("Car lights (unlit plates, no real-time light)")]
         public Color headlightOn = new Color(1f, 0.97f, 0.8f);
         public Color headlightOff = new Color(0.55f, 0.55f, 0.5f);

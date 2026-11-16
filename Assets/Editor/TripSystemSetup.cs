@@ -56,6 +56,16 @@ namespace Taxi.EditorTools
             Set(lights, "config", cfg);
             Set(lights, "material", HintMaterial());
 
+            // ---- Engine sound (looping clip, pitch/volume by speed) ----
+            var engineSrc = GetOrAdd<AudioSource>(car.gameObject);
+            engineSrc.clip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/EngineLoop.wav");
+            engineSrc.loop = true;
+            engineSrc.playOnAwake = false;
+            engineSrc.spatialBlend = 0f;
+            var engine = GetOrAdd<EngineAudio>(car.gameObject);
+            Set(engine, "config", cfg);
+            Set(engine, "car", car);
+
             // ---- HUD ----
             var canvas = hud.GetComponent<Canvas>();
             var font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");

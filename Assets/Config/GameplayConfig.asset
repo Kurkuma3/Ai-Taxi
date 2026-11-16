@@ -23,6 +23,11 @@ MonoBehaviour:
   collisionSpeedKeep: 0.6
   collisionSpinKeep: 0
   stoppedSpeedThreshold: 0.25
+  engineIdlePitch: 0.8
+  engineMaxPitch: 2.1
+  engineIdleVolume: 0.12
+  engineMaxVolume: 0.45
+  engineResponse: 4
   headlightOn: {r: 1, g: 0.97, b: 0.8, a: 1}
   headlightOff: {r: 0.55, g: 0.55, b: 0.5, a: 1}
   brakeLightOn: {r: 1, g: 0.05, b: 0.05, a: 1}
