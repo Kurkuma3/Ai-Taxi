@@ -268,10 +268,15 @@ Files: `Assets/Scripts/Objectives/` (`ObjectiveDef`, `ObjectiveTracker`), editor
 
 **HUD.** `Hud.SetObjective` uses a dark pill under the money counter (top, y −205, 960 × 84, font 46). `Hud.ShowToast` uses a pill in the upper middle (y +420 from the centre). Both are cloned at runtime from the fare-label template. `offerEdgeTop` was raised from 0.13 to 0.17 so the order edge arrows stay below the objective line.
 
+**Objective log** (`ObjectiveLog`). Every finished step, intro included, is appended to `Application.persistentDataPath/objective_log.csv` with the columns `number,title,start,finish,duration_s,attempts`. Start and finish are wall-clock `yyyy-MM-dd HH:mm:ss`, the duration is in seconds with one decimal, and numbers use the invariant culture (dot decimal). The console prints `[OBJ] 6 Long haul — 54.2 s`. After the last objective it prints `[OBJ] Total — 12:34` (sum of objectives 1–10, intro excluded) and appends a `total` row. A run that starts from the intro (fresh progress) starts a new file; a resumed run appends to it. Durations use unscaled time since launch, so time with the app in the background is not counted. In the editor the file is `%USERPROFILE%/AppData/LocalLow/AiTaxi/Taxi Driver/objective_log.csv`.
+
+**Debug panel** (`DebugPanel`, IMGUI, only when `Debug.isDebugBuild`: editor and Development builds; disabled in release builds). A small "DBG" button sits in the top-left corner. It opens a box with the log path and a **Copy log** button that puts the whole CSV on the clipboard (`GUIUtility.systemCopyBuffer`) and reports the line count. Tapping it also starts the floating stick for that finger; a tap without a drag does not move anything. For the panel on a phone, build with **Development Build** checked.
+
 Verify: Reset Save, Play. The top line shows the intro text. Get in: "First fare · 0/1". Finish the ride: the rating toast appears and the line switches to "Heavy bags · 0/1". Play Mode was not run for this feature.
 
 ## Change log
 
+- 2026-11-16 — Objective timing: `objective_log.csv` in persistentDataPath (number, title, start, finish, duration_s, attempts), `[OBJ]` console lines and total, debug panel (Development builds) with the path and Copy log.
 - 2026-11-16 — Objectives: intro + 10 objectives from config (`ObjectiveTracker`, top line "Title · n/m"), ride bumps (`CarController.Bumped`, `bumpMinImpactSpeed`) and 1–5 star rating toast, luggage order guaranteed while a luggage objective is active, `docs/OBJECTIVES.md`; `Taxi > Setup Objectives`.
 - 2026-11-16 — Engine upgrade now raises top speed 12 → 15 → 18 m/s (config `engineTopSpeeds`, replaces `engineAccelPerLevel`), acceleration scales with it; camera zoom uses the current top speed; Engine sign shows the speed, its board is wider.
 - 2026-11-16 — Upgrades: three garage pads (Engine +15% acceleration, Steering +15% turn rate, Fare Meter +10% fares; two levels each), ring purchase on foot, red blink when short, MAX sign, saved, cleared by Reset Save; config header Upgrades; `Taxi > Setup Upgrades`.

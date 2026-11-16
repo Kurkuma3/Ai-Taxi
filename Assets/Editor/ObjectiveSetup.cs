@@ -39,6 +39,9 @@ namespace Taxi.EditorTools
             Set(tracker, "upgrades", upgrades);
             Set(tracker, "playerState", fsm);
             Set(tracker, "hud", hud);
+            var log = GetOrAdd<ObjectiveLog>(systems);
+            Set(log, "tracker", tracker);
+            GetOrAdd<DebugPanel>(systems);
             EditorSceneManager.MarkSceneDirty(systems.scene);
             Debug.Log("[Taxi] Objectives set up on " + systems.name);
         }
