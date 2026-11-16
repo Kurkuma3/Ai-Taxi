@@ -11,8 +11,15 @@ namespace Taxi.EditorTools
     /// City/PassengerStops and the City/Decals/ParkingLot quad is a drivable shape (cylinders are discs, everything
     /// else an oriented rectangle). A point on a shape's edge gets a curb when the point just outside it is not covered
     /// by any other shape, so junctions and pocket entrances stay open automatically.
-    /// Output: City/Curbs with one combined low visual mesh and invisible tall BoxColliders on the "Curb" layer
+    /// Output: City/Curbs with one combined low visual mesh and invisible tall colliders on the "Curb" layer
     /// (collides with the car only; the "Player" layer ignores it) using a frictionless physics material.
+    /// Smoothness rules (the car must slide along, never snag):
+    /// - a run ends exactly where the road edge meets an opening (binary search, not the 0.5 m sampling grid) and is
+    ///   pulled back by the cap radius, so nothing pokes into a junction, a pocket mouth or a ring entrance;
+    /// - every piece is a box without end overlap plus a vertical capsule at each end: rounded ends and rounded
+    ///   corners where two runs meet;
+    /// - collinear touching pieces (from neighbouring road quads) are merged, so there are no seams to catch on.
+    /// Build() logs how much curb footprint lies on drivable surface (should be ~0).
     /// </summary>
     public static class CurbBuilder
     {
@@ -42,7 +49,9 @@ namespace Taxi.EditorTools
             }
         }
 
-        struct Piece { public Vector2 a, b, n; }   // curb along a→b, outward normal n
+        struct Piece { public Vector2 a, b, n; public bool openA, openB; }   // curb along a→b, outward normal n; open = ends at an opening
+
+        const float CapRadius = Thickness * 0.5f;
 
         [MenuItem("Taxi/Build Curbs")]
         public static void BuildMenu()
@@ -71,6 +80,8 @@ namespace Taxi.EditorTools
                 if (s.disc) DiscEdges(s, shapes, pieces);
                 else RectEdges(s, shapes, pieces);
             }
+            pieces = MergeCollinear(pieces);
+            TrimOpenEnds(pieces);
 
             var root = new GameObject(RootName);
             root.transform.SetParent(city.transform, false);
@@ -79,13 +90,15 @@ namespace Taxi.EditorTools
             var cubeTemp = GameObject.CreatePrimitive(PrimitiveType.Cube);
             var cubeMesh = cubeTemp.GetComponent<MeshFilter>().sharedMesh;
 
+            var cylTemp = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            var cylMesh = cylTemp.GetComponent<MeshFilter>().sharedMesh;
             int i = 0;
             foreach (var p in pieces)
             {
                 Vector2 dir = p.b - p.a;
-                float len = dir.magnitude + Thickness;          // overlap at both ends closes corners
-                if (len < 0.3f) continue;
-                Vector2 mid = (p.a + p.b) * 0.5f + p.n * (Thickness * 0.5f);
+                float len = dir.magnitude;                       // no end overlap: the caps round the ends instead
+                if (len < 0.05f) continue;
+                Vector2 mid = (p.a + p.b) * 0.5f + p.n * CapRadius;
                 var rot = Quaternion.LookRotation(new Vector3(p.n.x, 0f, p.n.y), Vector3.up);   // local Z = outward
 
                 var go = new GameObject("Curb_" + i++);
@@ -96,6 +109,16 @@ namespace Taxi.EditorTools
                 col.center = new Vector3(0f, ColliderHeight * 0.5f, 0f);
                 col.size = new Vector3(len, ColliderHeight, Thickness);
                 col.sharedMaterial = phys;
+                // Rounded ends: a vertical capsule (a post) at each end, tangent to the road edge.
+                for (int e = -1; e <= 1; e += 2)
+                {
+                    var cap = go.AddComponent<CapsuleCollider>();
+                    cap.direction = 1;
+                    cap.radius = CapRadius;
+                    cap.height = ColliderHeight;
+                    cap.center = new Vector3(e * len * 0.5f, ColliderHeight * 0.5f, 0f);
+                    cap.sharedMaterial = phys;
+                }
                 GameObjectUtility.SetStaticEditorFlags(go, StaticEditorFlags.BatchingStatic);
 
                 combine.Add(new CombineInstance
@@ -103,8 +126,20 @@ namespace Taxi.EditorTools
                     mesh = cubeMesh,
                     transform = Matrix4x4.TRS(new Vector3(mid.x, VisualHeight * 0.5f, mid.y), rot, new Vector3(len, VisualHeight, Thickness)),
                 });
+                for (int e = -1; e <= 1; e += 2)
+                {
+                    Vector2 end = mid + dir.normalized * (e * len * 0.5f);
+                    combine.Add(new CombineInstance
+                    {
+                        mesh = cylMesh,   // unit cylinder is 2 high: scale y by half the curb height
+                        transform = Matrix4x4.TRS(new Vector3(end.x, VisualHeight * 0.5f, end.y), Quaternion.identity,
+                            new Vector3(Thickness, VisualHeight * 0.5f, Thickness)),
+                    });
+                }
             }
             Object.DestroyImmediate(cubeTemp);
+            Object.DestroyImmediate(cylTemp);
+            LogIntrusion(pieces, shapes);
 
             // one renderer for all curb visuals (mobile: a single draw call)
             var mesh = AssetDatabase.LoadAssetAtPath<Mesh>(MeshPath);
@@ -195,25 +230,171 @@ namespace Taxi.EditorTools
                     if (edge && runStart < 0) runStart = i;
                     if (!edge && runStart >= 0)
                     {
-                        outList.Add(new Piece { a = a + dir * (runStart * cell), b = a + dir * (i * cell), n = n });
+                        // Exact ends: where the outside switches between open road and nothing (an opening),
+                        // instead of the cell boundary. Corner ends of the rectangle stay where they are.
+                        bool openA = runStart > 0, openB = i < cells;
+                        float ta = openA ? Transition(a, dir, n, (runStart - 0.5f) * cell, (runStart + 0.5f) * cell, shapes) : 0f;
+                        float tb = openB ? Transition(a, dir, n, (i + 0.5f) * cell, (i - 0.5f) * cell, shapes) : len;
+                        if (tb - ta > 0.05f)
+                            outList.Add(new Piece { a = a + dir * ta, b = a + dir * tb, n = n, openA = openA, openB = openB });
                         runStart = -1;
                     }
                 }
             }
         }
 
+        /// <summary>
+        /// Along the edge, between tCovered (outside is road) and tFree (outside is nothing), the distance where it
+        /// switches, to about 1 cm. Returned on the free side, so the curb never extends over open road.
+        /// </summary>
+        static float Transition(Vector2 a, Vector2 dir, Vector2 n, float tCovered, float tFree, List<Shape> shapes)
+        {
+            for (int k = 0; k < 10; k++)
+            {
+                float m = (tCovered + tFree) * 0.5f;
+                if (Covered(a + dir * m + n * Probe, shapes)) tCovered = m; else tFree = m;
+            }
+            return tFree;
+        }
+
+        /// <summary>Ends at an opening are pulled back by the cap radius, so the rounded cap sits fully outside the opening.</summary>
+        static void TrimOpenEnds(List<Piece> pieces)
+        {
+            for (int i = 0; i < pieces.Count; i++)
+            {
+                var p = pieces[i];
+                Vector2 d = p.b - p.a;
+                float len = d.magnitude;
+                if (len < 0.01f) continue;
+                Vector2 dir = d / len;
+                float trimA = p.openA ? CapRadius : 0f, trimB = p.openB ? CapRadius : 0f;
+                if (len - trimA - trimB < 0.05f) { pieces.RemoveAt(i--); continue; }
+                p.a += dir * trimA;
+                p.b -= dir * trimB;
+                pieces[i] = p;
+            }
+        }
+
+        /// <summary>Joins pieces on the same line, facing the same way, that touch or overlap (neighbouring road quads).</summary>
+        static List<Piece> MergeCollinear(List<Piece> pieces)
+        {
+            var list = new List<Piece>(pieces);
+            bool merged = true;
+            while (merged)
+            {
+                merged = false;
+                for (int i = 0; i < list.Count && !merged; i++)
+                for (int j = i + 1; j < list.Count && !merged; j++)
+                {
+                    var p = list[i]; var q = list[j];
+                    if (Vector2.Dot(p.n, q.n) < 0.999f) continue;
+                    Vector2 d = p.b - p.a;
+                    float len = d.magnitude;
+                    if (len < 0.01f) continue;
+                    Vector2 dir = d / len;
+                    // same line: both ends of q lie on the line of p
+                    if (Mathf.Abs(Vector2.Dot(q.a - p.a, p.n)) > 0.03f || Mathf.Abs(Vector2.Dot(q.b - p.a, p.n)) > 0.03f) continue;
+                    float qa = Vector2.Dot(q.a - p.a, dir), qb = Vector2.Dot(q.b - p.a, dir);
+                    float qmin = Mathf.Min(qa, qb), qmax = Mathf.Max(qa, qb);
+                    if (qmin > len + 0.05f || qmax < -0.05f) continue;   // apart along the line
+                    float lo = Mathf.Min(0f, qmin), hi = Mathf.Max(len, qmax);
+                    bool openLo = lo < 0f ? (qa < qb ? q.openA : q.openB) : p.openA;
+                    bool openHi = hi > len ? (qa < qb ? q.openB : q.openA) : p.openB;
+                    list[i] = new Piece { a = p.a + dir * lo, b = p.a + dir * hi, n = p.n, openA = openLo, openB = openHi };
+                    list.RemoveAt(j);
+                    merged = true;
+                }
+            }
+            return list;
+        }
+
+        /// <summary>Logs the curb footprint (box + caps) that lies on drivable surface; it should be close to zero.</summary>
+        static void LogIntrusion(List<Piece> pieces, List<Shape> shapes)
+        {
+            int samples = 0, onRoad = 0, badPieces = 0;
+            foreach (var p in pieces)
+            {
+                Vector2 d = p.b - p.a;
+                float len = d.magnitude;
+                if (len < 0.05f) continue;
+                Vector2 dir = d / len;
+                int bad = 0;
+                // Sample the footprint from 5 cm outside the road edge outward, round caps included.
+                for (float t = -CapRadius; t <= len + CapRadius + 1e-3f; t += 0.1f)
+                for (float o = 0.05f; o <= Thickness - 0.05f + 1e-3f; o += 0.1f)
+                {
+                    Vector2 pt = p.a + dir * t + p.n * o;
+                    if (t < 0f || t > len)
+                    {
+                        Vector2 c = (t < 0f ? p.a : p.b) + p.n * CapRadius;
+                        if ((pt - c).sqrMagnitude > CapRadius * CapRadius) continue;   // outside the round cap
+                    }
+                    samples++;
+                    if (Covered(pt, shapes)) { onRoad++; bad++; }
+                }
+                if (bad > 0) badPieces++;
+            }
+            LastReport = "[Taxi] Curbs: " + pieces.Count + " pieces; footprint samples on drivable surface: " + onRoad + "/" + samples
+                         + " (" + (samples > 0 ? 100f * onRoad / samples : 0f).ToString("0.0") + "%), pieces touching road: " + badPieces;
+            Debug.Log(LastReport);
+        }
+
+        /// <summary>The last intrusion report of Build() (for tools that cannot read the console).</summary>
+        public static string LastReport { get; private set; }
+
+        /// <summary>Same check for the curbs currently in the scene, read from their colliders (before/after comparisons).</summary>
+        public static string MeasureScene()
+        {
+            var city = GameObject.Find("City");
+            var shapes = CollectShapes(city.transform);
+            var curbs = city.transform.Find(RootName);
+            int samples = 0, onRoad = 0, bad = 0, n = 0;
+            foreach (var box in curbs.GetComponentsInChildren<BoxCollider>())
+            {
+                n++;
+                var tr = box.transform;
+                int b = 0;
+                for (float x = -box.size.x * 0.5f; x <= box.size.x * 0.5f + 1e-3f; x += 0.1f)
+                for (float z = -box.size.z * 0.5f + 0.05f; z <= box.size.z * 0.5f - 0.05f + 1e-3f; z += 0.1f)
+                {
+                    Vector3 w = tr.TransformPoint(new Vector3(x, 0f, z) + new Vector3(box.center.x, 0f, box.center.z));
+                    samples++;
+                    if (Covered(new Vector2(w.x, w.z), shapes)) { onRoad++; b++; }
+                }
+                foreach (var cap in box.GetComponents<CapsuleCollider>())
+                for (float x = -cap.radius; x <= cap.radius + 1e-3f; x += 0.1f)
+                for (float z = -cap.radius; z <= cap.radius + 1e-3f; z += 0.1f)
+                {
+                    if (x * x + z * z > cap.radius * cap.radius) continue;
+                    Vector3 w = tr.TransformPoint(new Vector3(cap.center.x + x, 0f, cap.center.z + z));
+                    samples++;
+                    if (Covered(new Vector2(w.x, w.z), shapes)) { onRoad++; b++; }
+                }
+                if (b > 0) bad++;
+            }
+            return n + " curb objects; footprint samples on drivable surface " + onRoad + "/" + samples + " ("
+                   + (samples > 0 ? 100f * onRoad / samples : 0f).ToString("0.0") + "%), objects touching road " + bad;
+        }
+
         static void DiscEdges(Shape s, List<Shape> shapes, List<Piece> outList)
         {
             int cells = Mathf.Max(12, Mathf.CeilToInt(2f * Mathf.PI * s.r / 0.75f));
             float da = 2f * Mathf.PI / cells;
+            var open = new bool[cells];   // outside of this arc cell is other road (a ring entrance)
             for (int i = 0; i < cells; i++)
             {
                 float am = (i + 0.5f) * da;
+                open[i] = Covered(s.c + new Vector2(Mathf.Cos(am), Mathf.Sin(am)) * (s.r + Probe), shapes);
+            }
+            for (int i = 0; i < cells; i++)
+            {
+                if (open[i]) continue;
+                float am = (i + 0.5f) * da;
                 Vector2 nm = new Vector2(Mathf.Cos(am), Mathf.Sin(am));
-                if (Covered(s.c + nm * (s.r + Probe), shapes)) continue;
                 Vector2 a = s.c + new Vector2(Mathf.Cos(i * da), Mathf.Sin(i * da)) * s.r;
                 Vector2 b = s.c + new Vector2(Mathf.Cos((i + 1) * da), Mathf.Sin((i + 1) * da)) * s.r;
-                outList.Add(new Piece { a = a, b = b, n = nm });
+                // Ends next to an entrance get trimmed (TrimOpenEnds) so the cap does not poke into it.
+                outList.Add(new Piece { a = a, b = b, n = nm, openA = open[(i + cells - 1) % cells], openB = open[(i + 1) % cells] });
             }
         }
 

@@ -280,6 +280,7 @@ Verify: Reset Save, Play. The top line shows the intro text. Get in: "First fare
 
 ## Change log
 
+- 2026-11-16 — Curbs smoothed (CurbBuilder): run ends found exactly by binary search instead of the 0.5 m grid and pulled back by the cap radius at openings (junctions, pocket mouths, ring entrances; ring arcs next to an entrance too); no 0.4 m end overlap; a vertical capsule at each end rounds ends and corners; collinear touching pieces merged (no seams). Measured with CurbBuilder.MeasureScene (curb footprint on drivable surface): before 376 objects, 3.2% of footprint, 218 touching road; after 345 objects, 1.8%, rest mostly where curbs run within 0.4 m of a neighbouring surface (a probe beyond the thickness made it worse, 2.4%, so it was kept at 0.3 m). Play Mode was not run.
 - 2026-11-16 — Objective log per run: `objective_log_<date>_<time>.csv`, never overwritten or deleted, a row written as each step finishes; DBG panel: Copy log copies the current run, new Open folder button (editor/desktop).
 - 2026-11-16 — Tips: 5★ +25%, 4★ +10%, lower none (config `tipByStars`); extra coin burst for the tip (`tipCoins`, `tipCoinDelay`); floating "+$fare / +$tip tip" label at the payment point (`payLabelTime`).
 - 2026-11-16 — `resetProgressOnLaunch` (default true): every launch clears zones, upgrades and objective progress (`LaunchReset`, runs first); money was never saved; the game always starts with the intro.
