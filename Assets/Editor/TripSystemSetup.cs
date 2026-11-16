@@ -51,6 +51,11 @@ namespace Taxi.EditorTools
             Set(hint, "config", cfg);
             Set(hint, "material", HintMaterial());
 
+            // ---- Car lights (unlit plates, same unlit material, tinted per plate) ----
+            var lights = GetOrAdd<CarLights>(car.gameObject);
+            Set(lights, "config", cfg);
+            Set(lights, "material", HintMaterial());
+
             // ---- HUD ----
             var canvas = hud.GetComponent<Canvas>();
             var font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");

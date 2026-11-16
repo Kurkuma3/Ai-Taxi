@@ -25543,6 +25543,7 @@ GameObject:
   - component: {fileID: 1151517013}
   - component: {fileID: 1151517012}
   - component: {fileID: 1151517011}
+  - component: {fileID: 1151517015}
   m_Layer: 0
   m_Name: Car
   m_TagString: Untagged
@@ -25628,6 +25629,20 @@ Transform:
   - {fileID: 798444828}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1151517015
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1151517010}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a2e9edf6577e4440933bad71a6e01e8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Taxi.Runtime::Taxi.CarLights
+  config: {fileID: 11400000, guid: 74d7e2b5b595a1549aca00f81d139ef4, type: 2}
+  material: {fileID: 2100000, guid: 14a9707045bb2044cb35aaf5cdc8db9e, type: 2}
 --- !u!1 &1154228907
 GameObject:
   m_ObjectHideFlags: 0
