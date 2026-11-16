@@ -188,8 +188,9 @@ namespace Taxi
         public float barrierVanishTime = 0.45f;
 
         [Header("Upgrades (garage pads)")]
-        [Tooltip("Engine: acceleration bonus per level (0.15 = +15%).")]
-        public float engineAccelPerLevel = 0.15f;
+        [Tooltip("Engine: top speed (m/s) at level 1, 2, ... (level 0 = Car maxSpeed). Acceleration scales by the same " +
+                 "ratio, so the time to reach top speed stays about the same.")]
+        public float[] engineTopSpeeds = { 15f, 18f };
         [Tooltip("Engine price per level; the array length is the max level.")]
         public int[] enginePrices = { 80, 160 };
         [Tooltip("Steering: turn rate bonus per level (0.15 = +15%).")]

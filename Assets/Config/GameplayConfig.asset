@@ -102,7 +102,9 @@ MonoBehaviour:
   barrierBuyTime: 1
   barrierBlinkRate: 5
   barrierVanishTime: 0.45
-  engineAccelPerLevel: 0.15
+  engineTopSpeeds:
+  - 15
+  - 18
   enginePrices: 50000000a0000000i
   steeringTurnPerLevel: 0.15
   steeringPrices: 50000000a0000000i

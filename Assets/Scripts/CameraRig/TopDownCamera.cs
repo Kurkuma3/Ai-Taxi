@@ -43,7 +43,7 @@ namespace Taxi
             Vector3 aheadGoal = Vector3.zero;
             if (IsCarTarget)
             {
-                float signed = car.Speed / Mathf.Max(0.1f, config.maxSpeed);
+                float signed = car.Speed / Mathf.Max(0.1f, car.MaxSpeed);   // the current top speed (Engine upgrade)
                 speed01 = Mathf.Clamp01(Mathf.Abs(signed));
                 Vector3 fwd = car.transform.forward;
                 fwd.y = 0f;

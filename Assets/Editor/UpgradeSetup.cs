@@ -18,9 +18,11 @@ namespace Taxi.EditorTools
         // Layout, not gameplay tuning: a row on the paved part of the start lot, below the garage, between the
         // Stop_Parking pocket (z 24.5..27.5) and the Stop_Depot pocket (z 37..40), west of the exit road and of the
         // car spawn; the player spawns right next to it.
-        // 4 m apart so the one-line signs ("Fare Meter Lv1 · $120" is ~3.5 m) fit side by side; the row ends at x 69.3,
+        // Boards sized to the longest one-line text at character size 0.055: "Engine Lv2 · $160 (18 m/s)" is 4.27 m,
+        // "Fare Meter Lv1 · $120" ~3.5 m. Engine sits a bit further west for its wider board; the row ends at x 69.3,
         // clear of the car spawn (body from x 70).
-        static readonly Vector3[] PadPositions = { new Vector3(59.4f, 0f, 31.8f), new Vector3(63.4f, 0f, 31.8f), new Vector3(67.4f, 0f, 31.8f) };
+        static readonly Vector3[] PadPositions = { new Vector3(59.0f, 0f, 31.8f), new Vector3(63.4f, 0f, 31.8f), new Vector3(67.4f, 0f, 31.8f) };
+        static readonly float[] BoardWidths = { 4.5f, 3.7f, 3.7f };
         static readonly UpgradeType[] PadTypes = { UpgradeType.Engine, UpgradeType.Steering, UpgradeType.FareMeter };
         const float SignTilt = 55f;   // degrees back, so the board reads from the high top-down camera
 
@@ -63,12 +65,12 @@ namespace Taxi.EditorTools
             var padMat = Mat("UpgradePad", "Universal Render Pipeline/Unlit", new Color(1f, 0.78f, 0.2f));
             var boardMat = Mat("UpgradeSign", "Universal Render Pipeline/Lit", Color.white);
             var postMat = Mat("UpgradePost", "Universal Render Pipeline/Lit", new Color(0.12f, 0.12f, 0.14f));
-            for (int i = 0; i < PadPositions.Length; i++) BuildPad(root.transform, PadTypes[i], PadPositions[i], padMat, boardMat, postMat);
+            for (int i = 0; i < PadPositions.Length; i++) BuildPad(root.transform, PadTypes[i], PadPositions[i], BoardWidths[i], padMat, boardMat, postMat);
             EditorSceneManager.MarkSceneDirty(root.scene);
             Debug.Log("[Taxi] Upgrades set up: 3 pads in front of the garage");
         }
 
-        static void BuildPad(Transform root, UpgradeType type, Vector3 pos, Material padMat, Material boardMat, Material postMat)
+        static void BuildPad(Transform root, UpgradeType type, Vector3 pos, float boardWidth, Material padMat, Material boardMat, Material postMat)
         {
             var go = new GameObject("Pad_" + type);
             go.transform.SetParent(root, false);
@@ -99,7 +101,7 @@ namespace Taxi.EditorTools
             tilt.SetParent(sign, false);
             tilt.localPosition = new Vector3(0f, 2.3f, 0f);
             tilt.localRotation = Quaternion.Euler(SignTilt, 0f, 0f);
-            Cube("Board", tilt, Vector3.zero, new Vector3(3.7f, 0.8f, 0.08f), boardMat);
+            Cube("Board", tilt, Vector3.zero, new Vector3(boardWidth, 0.8f, 0.08f), boardMat);
             var textGo = new GameObject("Label");
             textGo.transform.SetParent(tilt, false);
             textGo.transform.localPosition = new Vector3(0f, 0f, -0.06f);

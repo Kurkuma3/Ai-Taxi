@@ -77,10 +77,12 @@ namespace Taxi
         void RefreshLabel(UpgradePad p)
         {
             string name = Upgrades.DisplayName(p.type);
-            // One line: "Engine Lv1 · $80", or "Engine MAX" at the top level.
-            p.SetText(upgrades.IsMax(p.type)
-                ? name + " MAX"
-                : name + " Lv" + (upgrades.Level(p.type) + 1) + " · $" + upgrades.NextPrice(p.type));
+            // One line: "Engine Lv1 · $80 (15 m/s)", "Steering Lv1 · $80", or "Engine MAX" at the top level.
+            if (upgrades.IsMax(p.type)) { p.SetText(name + " MAX"); return; }
+            int next = upgrades.Level(p.type) + 1;
+            string text = name + " Lv" + next + " · $" + upgrades.NextPrice(p.type);
+            if (p.type == UpgradeType.Engine) text += " (" + upgrades.TopSpeedAt(next).ToString("0") + " m/s)";
+            p.SetText(text);
         }
 
         UpgradePad PadUnder(Vector3 pos)

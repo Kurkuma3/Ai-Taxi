@@ -23,7 +23,9 @@ namespace Taxi
         public float Speed { get; private set; }
         public bool HasInput { get; private set; }
         public bool IsReversing { get; private set; }
-        public bool IsStopped => !HasInput && Mathf.Abs(Speed) < config.stoppedSpeedThreshold;
+        /// <summary>Current forward top speed (config.maxSpeed, raised by the Engine upgrade).</summary>
+        public float MaxSpeed => upgrades != null ? upgrades.MaxSpeed : config.maxSpeed;
+        public bool IsStopped =>!HasInput && Mathf.Abs(Speed) < config.stoppedSpeedThreshold;
 
         Rigidbody rb;
         float targetSpeed;
@@ -75,7 +77,7 @@ namespace Taxi
             steer = Mathf.Clamp(delta / config.steerFullAngle, -1f, 1f);
 
             // Throttle from deflection; slow down a bit while turning hard.
-            float top = IsReversing ? -config.reverseMaxSpeed : config.maxSpeed;
+            float top = IsReversing ? -config.reverseMaxSpeed : MaxSpeed;
             targetSpeed = top * throttle * Mathf.Lerp(1f, config.turningSpeedFactor, Mathf.Abs(steer));
         }
 

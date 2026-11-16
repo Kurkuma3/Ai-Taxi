@@ -22,7 +22,18 @@ namespace Taxi
 
         readonly int[] levels = new int[Count];
 
-        public float AccelerationMultiplier => 1f + config.engineAccelPerLevel * levels[(int)UpgradeType.Engine];
+        /// <summary>Car top speed for the current Engine level (level 0 = config.maxSpeed).</summary>
+        public float MaxSpeed => TopSpeedAt(levels[(int)UpgradeType.Engine]);
+        /// <summary>Acceleration grows with the top speed, so the time to reach it stays about the same.</summary>
+        public float AccelerationMultiplier => MaxSpeed / Mathf.Max(0.1f, config.maxSpeed);
+
+        /// <summary>Top speed at an Engine level; levels past the configured list keep the last value.</summary>
+        public float TopSpeedAt(int level)
+        {
+            var s = config.engineTopSpeeds;
+            if (level <= 0 || s == null || s.Length == 0) return config.maxSpeed;
+            return s[Mathf.Min(level, s.Length) - 1];
+        }
         public float TurnMultiplier => 1f + config.steeringTurnPerLevel * levels[(int)UpgradeType.Steering];
         /// <summary>Fare bonus fraction (0.1 per Fare Meter level by default).</summary>
         public float FareBonus => config.fareMeterPerLevel * levels[(int)UpgradeType.FareMeter];
