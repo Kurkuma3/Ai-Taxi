@@ -83,6 +83,7 @@ namespace Taxi
         public bool ForceLuggageOrder { get; set; }
 
         int rideBumps;
+        bool hasDriven;   // the player has been in the taxi this session; no orders appear before that
 
         public State Current { get; private set; }
         /// <summary>Passengers picked up this session.</summary>
@@ -203,6 +204,7 @@ namespace Taxi
         {
             float dt = Time.deltaTime;
             bool driving = playerState.Current == PlayerStateMachine.State.Driving;
+            if (driving) hasDriven = true;
             bool onFoot = playerState.Current == PlayerStateMachine.State.OnFoot;
             Vector3 carPos = car.transform.position;
             Vector3 hintFrom = driving || playerState.Current == PlayerStateMachine.State.Entering ? carPos : player.transform.position;
@@ -275,7 +277,7 @@ namespace Taxi
                 if (!o.active)
                 {
                     // New orders appear only while searching: a ride clears the board, its end deals a fresh one.
-                    if (!searching || !SlotAllowed(i)) continue;
+                    if (!searching || !SlotAllowed(i) || !hasDriven) continue;   // first passenger only once the player is in the taxi
                     o.refill -= dt;
                     if (o.refill <= 0f) Fill(o);
                     continue;
@@ -755,6 +757,42 @@ namespace Taxi
 
                 case State.AwaitLuggage:
                     break;   // dropPoint was set next to the passenger's standPoint when they got out
+            }
+        }
+
+        /// <summary>The luggage step the player is on (for tutorial hints) and where it happens.</summary>
+        public enum LuggageStep { None, GetOutAtPickup, PickUpBag, ToTrunk, GetOutAtDropoff, FromTrunk, ToPassenger }
+
+        public LuggageStep CurrentLuggageStep(out Vector3 target)
+        {
+            target = car.transform.position;
+            var ps = playerState.Current;
+            bool onFoot = ps == PlayerStateMachine.State.OnFoot, driving = ps == PlayerStateMachine.State.Driving;
+            switch (Current)
+            {
+                case State.Searching:
+                {
+                    if (committedSlot >= 0)
+                    {
+                        if (orders[committedSlot].luggage != Luggage.Carried) return LuggageStep.None;
+                        target = TrunkPoint;
+                        return LuggageStep.ToTrunk;
+                    }
+                    int f = NearestOrder(car.transform.position, config.stopRadius);
+                    if (f < 0 || orders[f].luggage != Luggage.AtStop) return LuggageStep.None;
+                    if (driving && car.IsStopped) return LuggageStep.GetOutAtPickup;
+                    if (!onFoot) return LuggageStep.None;
+                    target = orders[f].suitcase.position;
+                    return LuggageStep.PickUpBag;
+                }
+                case State.AwaitLuggage:
+                    if (driving) return Flat(car.transform.position, DropoffPos) <= config.stopRadius ? LuggageStep.GetOutAtDropoff : LuggageStep.None;
+                    if (!onFoot) return LuggageStep.None;
+                    if (ride.luggage == Luggage.InTrunk) { target = TrunkPoint; return LuggageStep.FromTrunk; }
+                    if (ride.luggage == Luggage.Carried) { target = ride.passenger.transform.position; return LuggageStep.ToPassenger; }
+                    return LuggageStep.None;
+                default:
+                    return LuggageStep.None;
             }
         }
 
